@@ -342,6 +342,28 @@ function prosesPermintaan(e) {
     }
 
     // 2b. Mod terjemahan
+    if (action === "transcribe") {
+      const apiKeyT = ambilApiKeyGroq(false);
+      if (!apiKeyT) return responJSON({ success: false, error: "Tiada API key" });
+      const mime = String(params.mime || "audio/webm").split(";")[0];
+      const ext = /mp4|m4a|aac/.test(mime) ? "m4a" : /ogg/.test(mime) ? "ogg" : /wav/.test(mime) ? "wav" : "webm";
+      const blob = Utilities.newBlob(Utilities.base64Decode(String(params.audio || "")), mime, "suara." + ext);
+      const petunjuk = "Perbualan santai dalam Bahasa Melayu Malaysia, kadang-kadang bercampur Bahasa Inggeris. Nama: "
+        + String(params.aiName || "Aura") + ", " + String(params.name || "") + ". Contoh: awak, saya, tak, nak, dah, je, boleh, macam mana, okey.";
+      let ralatT = "";
+      const modelW = ["whisper-large-v3", "whisper-large-v3-turbo"];
+      for (let i = 0; i < modelW.length; i++) {
+        const r = UrlFetchApp.fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+          method: "post", headers: { "Authorization": "Bearer " + apiKeyT }, muteHttpExceptions: true,
+          payload: { file: blob, model: modelW[i], language: "ms", prompt: petunjuk, temperature: "0", response_format: "json" }
+        });
+        let j = {}; try { j = JSON.parse(r.getContentText()); } catch (x) {}
+        if (j && typeof j.text === "string") return responJSON({ success: true, text: j.text.trim(), model: modelW[i] });
+        ralatT = (j && j.error && j.error.message) || ("HTTP " + r.getResponseCode());
+      }
+      return responJSON({ success: false, error: ralatT });
+    }
+
     if (action === "translate") {
       const apiKey = ambilApiKeyGroq();
       const sasaran = String(params.target || "English");
@@ -368,6 +390,8 @@ function prosesPermintaan(e) {
 
       const namaAI = String(params.aiName || "Aura").trim().slice(0, 40) || "Aura";
       const systemPrompt = `Nama anda ialah ${namaAI}. Anda sahabat karib dan AI serba tahu kepada ${nama}. Jika ${nama} tanya nama anda, jawab "${namaAI}". Jika ${nama} panggil "${namaAI}", itu bermaksud dia bercakap dengan anda.
+
+NOTA: Mesej ${nama} biasanya datang daripada pengecaman suara. Jika ada perkataan yang pelik atau tersalah dengar, fahami maksud sebenar ikut konteks perbualan dan bunyi yang hampir sama. Jangan tegur kesilapan ejaan itu.
 
 BAHASA (PALING PENTING):
 Anda WAJIB bercakap dalam Bahasa Melayu MALAYSIA sahaja, gaya santai orang Malaysia bersembang. JANGAN SEKALI-KALI guna Bahasa Indonesia.
