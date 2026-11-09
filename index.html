@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTXkSOs2bFK2VZ89KIMxTZaTQbmTAyOEZd-1zqu7vivAKrZ/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -864,7 +864,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
   });
 
   const btnWhisper = document.getElementById("btnWhisper");
-  const paparWhisper = () => { btnWhisper.textContent = "🎯 Dengar Tepat (setaraf Siri): " + (modWhisper ? "ON" : "OFF"); btnWhisper.classList.toggle("active-toggle", modWhisper); };
+  function paparWhisper() { btnWhisper.textContent = "🎯 Dengar Tepat (setaraf Siri): " + (modWhisper ? "ON" : "OFF"); btnWhisper.classList.toggle("active-toggle", modWhisper); }
   btnWhisper.addEventListener("click", () => {
     if (!window.MediaRecorder) { alert("Pelayar ini tidak menyokong rakaman suara."); return; }
     const tadi = mahuDengar;
@@ -1016,20 +1016,17 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     try {
       const jenis = jenisRakaman();
       WS.rec = jenis ? new MediaRecorder(WS.stream, { mimeType: jenis, audioBitsPerSecond: 32000 }) : new MediaRecorder(WS.stream);
-      WS.chunks = []; WS.mulaRakam = performance.now();
-      const sesi = ++WS.sesi;
-      WS.rec.ondataavailable = e => { if (e.data && e.data.size && sesi === WS.sesi) WS.chunks.push(e.data); };
+      const ketulan = []; WS.rec._ketulan = ketulan; WS.mulaRakam = performance.now();
+      WS.rec.ondataavailable = e => { if (e.data && e.data.size) ketulan.push(e.data); };
       WS.rec.start(250);
     } catch (e) { WS.rec = null; }
   }
   function hentiRakam(hantar) {
     const r = WS.rec; WS.rec = null;
     if (!r) return;
-    const sesi = WS.sesi;
     r.onstop = () => {
-      const blob = new Blob(WS.chunks, { type: r.mimeType || "audio/webm" });
-      WS.chunks = [];
-      if (hantar && sesi === WS.sesi && blob.size > 1500) tukarKeTeks(blob);
+      const blob = new Blob(r._ketulan || [], { type: r.mimeType || "audio/webm" });
+      if (hantar && blob.size > 1500) tukarKeTeks(blob);
     };
     try { r.stop(); } catch (e) {}
   }
@@ -1043,16 +1040,35 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
         body: JSON.stringify({ action: "transcribe", audio: b64, mime: blob.type, aiName: aiName, name: userName }) });
       const j = await res.json();
       let teks = String((j && j.text) || "").replace(/\s+/g, " ").trim();
-      if (j && j.error) console.warn("Whisper:", j.error);
+      if (!j || !j.success) {
+        console.warn("Whisper:", j && j.error);
+        whisperGagal++;
+        if (whisperGagal >= 2 && recognition) { tukarKeBiasa("⚠️ Dengar Tepat belum aktif di server — guna pengecaman biasa"); return; }
+        orbStatusLabel.textContent = "⚠️ Tak dapat proses suara, sila cakap sekali lagi";
+        return;
+      }
+      whisperGagal = 0;
       if (!teks || RE_HALUSINASI.test(teks) || aiMasihBersuara()) { orbStatusLabel.textContent = "🎙️ Sedang mendengar suara anda..."; return; }
       textMessageInput.value = teks;
       teksMuktamad = teks; teksSementara = "";
       hantarUcapan();
     } catch (e) {
-      console.warn("Whisper gagal, guna pengecaman biasa", e);
-      orbStatusLabel.textContent = "⚠️ Gagal proses suara, cuba lagi";
+      console.warn("Whisper gagal", e);
+      whisperGagal++;
+      if (whisperGagal >= 2 && recognition) tukarKeBiasa("⚠️ Talian bermasalah — guna pengecaman biasa");
+      else orbStatusLabel.textContent = "⚠️ Gagal proses suara, cuba lagi";
     } finally { WS.proses = false; }
   }
+  let whisperGagal = 0;
+  function tukarKeBiasa(mesej) {
+    whisperHenti(false);
+    modWhisper = false;
+    try { paparWhisper(); } catch (e) {}
+    orbStatusLabel.textContent = mesej;
+    mahuDengar = true; setTimeout(mulaDengar, 400);
+  }
+  // iPhone/Chrome gantung bunyi sehingga skrin disentuh -> sambung semula pada setiap sentuhan
+  document.addEventListener("pointerdown", () => { if (WS.ac && WS.ac.state === "suspended") WS.ac.resume().catch(() => {}); });
   async function whisperMula() {
     if (WS.aktif || !mahuDengar) return;
     try {
@@ -1064,8 +1080,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
       }
       if (WS.ac.state === "suspended") { try { await WS.ac.resume(); } catch (e) {} }
     } catch (e) {
-      orbStatusLabel.textContent = "⚠️ Benarkan akses mikrofon dalam pelayar";
-      modWhisper = false; return;
+      modWhisper = false;
+      if (recognition) { mahuDengar = true; setTimeout(mulaDengar, 300); }
+      else orbStatusLabel.textContent = "⚠️ Benarkan akses mikrofon dalam pelayar";
+      return;
     }
     WS.aktif = true; WS.cakap = false; recAktif = true; isListening = true;
     AURA.listening = true; btnMicTalk.classList.add("listening"); orbSphere.classList.add("listening");
@@ -1087,7 +1105,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     WS.an.getByteTimeDomainData(WS.buf);
     let s = 0; for (let i = 0; i < WS.buf.length; i++) { const v = (WS.buf[i] - 128) / 128; s += v * v; }
     const rms = Math.sqrt(s / WS.buf.length), now = performance.now();
-    const ambang = Math.max(0.018, WS.lantai * 3.2);
+    const ambang = Math.max(0.012, WS.lantai * 2.6);
     if (rms > ambang) {
       if (!WS.cakap) { WS.cakap = true; WS.mulaCakap = now; }
       WS.akhirSuara = now; AURA.heardAt = now;
