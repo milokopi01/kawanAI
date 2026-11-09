@@ -37,7 +37,7 @@ function ambilApiKeyGroq() {
     setupAwal();
     sheet = ss.getSheetByName("apikey");
   }
-  const apiKey = String(sheet.getRange("A1").getValue() || "").trim();
+  const apiKey = String(sheet.getRange("A1").getValue() || "").replace(/[\s"']/g, "");
   if (!apiKey || apiKey === "MASUKKAN_API_KEY_GROQ_DISINI") {
     throw new Error("Kunci API Groq belum dimasukkan dalam tab 'apikey' sel A1.");
   }
@@ -63,6 +63,31 @@ function prosesPermintaan(e) {
 
     const action = params.action || "getConfig";
 
+    // 0. Uji kunci API dalam Sheet (tab 'apikey' sel A1) terus ke Groq
+    if (action === "testKey") {
+      let apiKey = "";
+      try { apiKey = ambilApiKeyGroq(); } catch (kErr) {
+        return responJSON({ status: "error", alive: false, maskedKey: "Tiada", keyLength: 0, message: kErr.message });
+      }
+      const t0 = Date.now();
+      const r = UrlFetchApp.fetch("https://api.groq.com/openai/v1/models", {
+        method: "get", headers: { "Authorization": "Bearer " + apiKey }, muteHttpExceptions: true
+      });
+      const code = r.getResponseCode();
+      let msg = "OK";
+      if (code !== 200) {
+        try { msg = JSON.parse(r.getContentText()).error.message; } catch (e2) { msg = "HTTP " + code; }
+      }
+      return responJSON({
+        status: code === 200 ? "success" : "error",
+        alive: code === 200,
+        maskedKey: topengKunci(apiKey),
+        keyLength: apiKey.length,
+        latencyMs: Date.now() - t0,
+        message: msg
+      });
+    }
+
     // 1. Ambil konfigurasi & senarai memori wajah yang pernah disimpan
     if (action === "getConfig") {
       const apiKey = ambilApiKeyGroq();
@@ -86,7 +111,7 @@ function prosesPermintaan(e) {
 
       return responJSON({
         status: "success",
-        apiKey: apiKey,
+        maskedKey: topengKunci(apiKey),
         faces: senaraiWajah
       });
     }
@@ -149,7 +174,9 @@ function prosesPermintaan(e) {
       const emosi = params.emotion || "Neutral / Tenang";
       const modKamera = params.cameraMode || "Aktif";
       const mesej = params.message || "";
-      const sejarah = params.history || [];
+      let sejarah = params.history || [];
+      if (typeof sejarah === "string") { try { sejarah = JSON.parse(sejarah); } catch (h) { sejarah = []; } }
+      sejarah = (Array.isArray(sejarah) ? sejarah : []).filter(m => m && m.role && m.content);
 
       const systemPrompt = `Anda ialah sahabat karib (kawan baik) dan AI serba tahu kepada ${nama}.
 Anda bercakap dalam Bahasa Melayu Malaysia yang sangat natural, santai, mesra, empati, dan bijaksana seperti manusia sebenar.
@@ -213,6 +240,11 @@ Peraturan Penting:
   } catch (err) {
     return responJSON({ status: "error", message: err.toString() });
   }
+}
+
+function topengKunci(k) {
+  if (!k) return "Tiada";
+  return k.length > 10 ? k.slice(0, 4) + "••••" + k.slice(-4) : "••••";
 }
 
 function responJSON(obj) {

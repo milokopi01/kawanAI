@@ -4,8 +4,8 @@
   "description": "Aplikasi PWA Sahabat AI Serba Tahu dengan Memori Wajah 128-Vektor, Pengesan Emosi dan Mod Suara Kawan Baik.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f8fc",
-  "theme_color": "#ffffff",
+  "background_color": "#02060c",
+  "theme_color": "#02060c",
   "orientation": "portrait-primary",
   "icons": [
     {

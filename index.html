@@ -10,7 +10,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
-<meta name="theme-color" content="#f8fbff">
+<meta name="theme-color" content="#02060c">
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -658,6 +658,30 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06
     color: #0284c7;
     min-height: 18px;
   }
+
+  /* ===== AURA NEBULA — TEMA GELAP PENUH + ZARAH ===== */
+  :root{--text-main:#e6f6ff;--text-muted:#8fb3c9;--glass-white:rgba(10,24,38,.55);--glass-strong:rgba(10,24,38,.72);--glass-border:rgba(120,220,255,.16);
+    --shadow-3d:0 20px 50px -15px rgba(0,0,0,.6),inset 0 1px 0 rgba(160,230,255,.12);--shadow-btn:0 0 18px rgba(56,189,248,.25),inset 0 1px 0 rgba(255,255,255,.12)}
+  html,body{background:#02060c!important;color:var(--text-main)!important}
+  body{background:radial-gradient(ellipse at 50% 40%,#06202e 0%,#030a12 55%,#010307 100%)!important}
+  .bg-orb{display:none!important}
+  #auraParticles{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+  body>*:not(#auraParticles):not(script){position:relative;z-index:1}
+  .modal-backdrop{z-index:50!important}
+  [class*="card"],[class*="panel"],header,section,.chat-input-bar,.metric-box,.modal-card{background:var(--glass-white)!important;border-color:var(--glass-border)!important;
+    backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);color:var(--text-main)!important;box-shadow:var(--shadow-3d)!important}
+  .btn-3d{background:rgba(20,50,70,.55)!important;color:#d8f3ff!important;border:1px solid rgba(120,220,255,.22)!important;box-shadow:var(--shadow-btn)!important;transition:transform .15s,box-shadow .2s!important}
+  .btn-3d:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(56,189,248,.45)!important}
+  .primary-3d,.send-btn,.mic-fab{background:linear-gradient(135deg,#0ea5e9,#22d3ee)!important;color:#02131c!important;border:none!important}
+  .input-3d,.chat-text-input{background:rgba(3,14,24,.7)!important;color:#e6f6ff!important;border:1px solid rgba(120,220,255,.2)!important}
+  .msg-ai{background:rgba(14,40,58,.7)!important;color:#e6f6ff!important;border:1px solid rgba(34,211,238,.2)!important}
+  .msg-user{background:linear-gradient(135deg,rgba(14,165,233,.85),rgba(34,211,238,.75))!important;color:#02131c!important}
+  .msg-meta,p,small{color:var(--text-muted)}
+  h1,h2,h3,.metric-val{color:#e6f6ff!important}
+  .orb-3d-sphere{opacity:0!important}
+  .crystal-orb-container{background:transparent!important}
+  .chat-stream{scroll-behavior:smooth}
+  .api-test-result-box{background:rgba(3,14,24,.7)!important;color:#e6f6ff!important}
 </style>
 </head>
 <body>
@@ -1433,5 +1457,67 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06
     });
   }
 </script>
+<canvas id="auraParticles"></canvas>
+<script>
+/* ===== AURA NEBULA: KAWAN AI ZARAH 3D (bertindak balas pada suara) ===== */
+(function(){
+  const cv=document.getElementById("auraParticles"),ctx=cv.getContext("2d");
+  let W,H,DPR=Math.min(window.devicePixelRatio||1,2);
+  function resize(){W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  resize();addEventListener("resize",resize);
+  const mobile=W<700, N=mobile?900:1700, STARS=mobile?90:180;
+  const P=[];const g=Math.PI*(3-Math.sqrt(5));
+  for(let i=0;i<N;i++){const y=1-(i/(N-1))*2,r=Math.sqrt(1-y*y),t=g*i;
+    P.push({x:Math.cos(t)*r,y:y,z:Math.sin(t)*r,s:Math.random(),f:Math.random()*6.28,d:0.6+Math.random()*0.4});}
+  const S=[];for(let i=0;i<STARS;i++)S.push({x:Math.random(),y:Math.random(),a:Math.random(),v:0.0002+Math.random()*0.0006});
+  // Mikrofon: analisis kelantangan bila mendengar
+  let analyser=null,buf=null,micLvl=0;
+  async function bukaMic(){ if(analyser) return;
+    try{const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+      const ac=new (window.AudioContext||window.webkitAudioContext)();const src=ac.createMediaStreamSource(st);
+      analyser=ac.createAnalyser();analyser.fftSize=512;buf=new Uint8Array(analyser.fftSize);src.connect(analyser);}catch(e){}
+  }
+  document.addEventListener("pointerdown",()=>{bukaMic();},{once:true});
+  const st=(n)=>{try{return eval(n);}catch(e){return false;}};
+  let rot=0,energy=0,scaleK=1,time=0,last=performance.now();
+  function frame(now){
+    const dt=Math.min((now-last)/16.67,3);last=now;time+=0.016*dt;
+    const listening=st("isListening"),speaking=st("isAiSpeaking");
+    if(analyser&&listening){analyser.getByteTimeDomainData(buf);let s=0;for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;s+=v*v;}micLvl=Math.min(1,Math.sqrt(s/buf.length)*6);}else micLvl*=0.9;
+    const speakLvl=speaking?(0.35+0.35*Math.abs(Math.sin(time*9))*Math.abs(Math.sin(time*3.7+1))):0;
+    const target=Math.max(micLvl,speakLvl);
+    energy+=(target-energy)*0.15*dt;
+    rot+=(0.0025+energy*0.02)*dt;
+    ctx.fillStyle="rgba(1,4,9,0.35)";ctx.fillRect(0,0,W,H);
+    // bintang
+    for(const s of S){s.y-=s.v*dt;if(s.y<0)s.y=1;ctx.fillStyle=`rgba(120,220,255,${0.15+0.25*Math.abs(Math.sin(time+s.a*6))})`;ctx.fillRect(s.x*W,s.y*H,1.2,1.2);}
+    const cx=W/2,cy=H*(mobile?0.32:0.42),R=Math.min(W,H)*(mobile?0.3:0.27)*(1+energy*0.18+Math.sin(time*1.3)*0.015);
+    // cahaya teras
+    const gr=ctx.createRadialGradient(cx,cy,0,cx,cy,R*1.25);
+    const hue=speaking?185:(listening?200:190);
+    gr.addColorStop(0,`hsla(${hue},90%,55%,${0.18+energy*0.25})`);gr.addColorStop(1,"hsla(200,90%,40%,0)");
+    ctx.fillStyle=gr;ctx.beginPath();ctx.arc(cx,cy,R*1.25,0,6.29);ctx.fill();
+    const cr=Math.cos(rot),sr=Math.sin(rot),ct=Math.cos(0.35),stt=Math.sin(0.35);
+    ctx.globalCompositeOperation="lighter";
+    for(const p of P){
+      const wob=1+Math.sin(time*2+p.f)*0.03+energy*Math.sin(time*12+p.f*3)*0.18*p.s;
+      let x=p.x*wob,y=p.y*wob,z=p.z*wob;
+      let x1=x*cr-z*sr,z1=x*sr+z*cr;let y1=y*ct-z1*stt,z2=y*stt+z1*ct;
+      const k=1/(1.9-z2*0.6),px=cx+x1*R*k*1.2,py=cy+y1*R*k*1.2;
+      const depth=(z2+1)/2,a=(0.15+depth*0.85)*p.d;
+      const size=(0.6+depth*1.8)*(1+energy*0.6);
+      const tw=0.6+0.4*Math.sin(time*3+p.f);
+      ctx.fillStyle=depth>0.8?`rgba(235,252,255,${a*tw})`:`hsla(${hue+p.s*25},90%,${60+depth*25}%,${a*tw})`;
+      // ekor kecil (kesan zarah terbang)
+      const tx=(x1*sr)*3*(1+energy*3);
+      ctx.fillRect(px-tx,py,size+Math.abs(tx),size*0.8);
+    }
+    ctx.globalCompositeOperation="source-over";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
 </body>
 </html>
