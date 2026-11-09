@@ -1,4 +1,4 @@
-const CACHE_NAME = "aura-3d-glass-v1";
+const CACHE_NAME = "aura-3d-glass-v2";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
