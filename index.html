@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhng_NQEkl0ZlJAVNrHMgNcXbsL0yFsgN6P_lmXfRTULn6_/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyWfX6Q-9zssseBKcsNl3m70Ax_0hPsHYXdsiW9NSU8DVEn5ECIMfSXlJFGrf4KiCVK/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -195,6 +195,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     background: var(--accent-emerald);
     box-shadow: 0 0 10px var(--accent-emerald);
   }
+  .dot-ind.error {
+    background: var(--accent-rose);
+    box-shadow: 0 0 10px var(--accent-rose);
+  }
 
   /* Grid Kandungan Utama */
   .main-grid {
@@ -210,12 +214,12 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     }
   }
 
-  /* Panel Kiri: Kamera, Pengesan  & Orb Suara 3D */
+  /* Panel Kiri: Kamera, Pengesan Wajah & Orb Suara 3D */
   .vision-panel {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
 
   .camera-stage {
@@ -321,7 +325,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     box-shadow: 0 4px 12px rgba(14, 165, 233, 0.12);
   }
 
-  /* Kad Metrik  & Emosi */
+  /* Kad Metrik Wajah & Emosi */
   .metrics-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -329,7 +333,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
   }
 
   .metric-card {
-    padding: 13px 15px;
+    padding: 12px 14px;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.86);
     border: 1px solid #ffffff;
@@ -339,7 +343,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
   }
 
   .metric-label {
-    font-size: 0.72rem;
+    font-size: 0.71rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-muted);
@@ -348,7 +352,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
   }
 
   .metric-val {
-    font-size: 0.98rem;
+    font-size: 0.94rem;
     font-weight: 800;
     color: var(--text-main);
     display: flex;
@@ -375,7 +379,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
     color: var(--text-main);
     font-weight: 700;
-    font-size: 0.84rem;
+    font-size: 0.83rem;
     padding: 12px 14px;
     border-radius: 16px;
     cursor: pointer;
@@ -413,13 +417,22 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
       inset 0 2px 3px rgba(255, 255, 255, 0.45);
   }
 
+  .btn-3d.emerald-3d {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 
+      0 12px 24px -6px rgba(16, 185, 129, 0.4),
+      inset 0 2px 3px rgba(255, 255, 255, 0.45);
+  }
+
   /* Panel Kanan: Ruang Borak Kawan Baik & Kawalan Mikrofon */
   .chat-panel {
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 14px;
-    height: 640px;
+    height: 650px;
   }
 
   @media (max-width: 920px) {
@@ -571,7 +584,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.4);
   }
 
-  /* Modal Pendaftaran Nama & Imbasan Wajah Kali Pertama */
+  /* Modal Pendaftaran Nama & Modal Uji API Key */
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -590,48 +603,72 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
   }
 
   .modal-card {
-    max-width: 460px;
+    max-width: 480px;
     width: 100%;
-    padding: 30px 26px;
+    padding: 28px 24px;
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
   }
 
   .modal-card h2 {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 800;
     color: var(--text-main);
   }
 
   .modal-card p {
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     color: var(--text-muted);
     line-height: 1.5;
   }
 
   .input-3d {
     width: 100%;
-    padding: 14px 18px;
+    padding: 14px 16px;
     border-radius: 16px;
     border: 1.5px solid #ffffff;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 
       inset 0 3px 6px rgba(148, 163, 184, 0.2),
       0 6px 14px rgba(100, 116, 139, 0.08);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-main);
     outline: none;
     text-align: center;
   }
 
+  .api-test-result-box {
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid #ffffff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.5;
+    text-align: left;
+    box-shadow: inset 0 2px 5px rgba(100, 116, 139, 0.1);
+  }
+
+  .api-test-result-box.alive {
+    background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+    color: #065f46;
+    border-color: #a7f3d0;
+  }
+
+  .api-test-result-box.dead {
+    background: linear-gradient(145deg, #fff1f2, #ffe4e6);
+    color: #9f1239;
+    border-color: #fecdd3;
+  }
+
   .scan-progress {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: #0284c7;
-    min-height: 20px;
+    min-height: 18px;
   }
 </style>
 </head>
@@ -642,15 +679,43 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
 <div class="bg-orb orb-2"></div>
 <div class="bg-orb orb-3"></div>
 
-<!-- Modal Masuk Nama Sebelum Guna -->
+<!-- Modal 1: Masuk Nama Sebelum Guna -->
 <div id="onboardingModal" class="modal-backdrop">
   <div class="glass-3d modal-card">
-    <div style="font-size: 2.6rem;">✨</div>
+    <div style="font-size: 2.6rem;">💎</div>
     <h2>Selamat Datang ke AURA 3D</h2>
     <p>Masukkan nama anda dahulu supaya sahabat AI mengenali anda, mengingati memori wajah anda, dan bersedia berborak seperti manusia biasa.</p>
     <input type="text" id="inputUserName" class="input-3d" placeholder="Masukkan nama panggilan anda..." autocomplete="off">
     <button id="btnStartApp" class="btn-3d primary-3d" style="padding: 15px; font-size: 0.96rem;">
       Mula Berbual Sekarang 🚀
+    </button>
+  </div>
+</div>
+
+<!-- Modal 2: Penguji & Pengurusan API Key Groq -->
+<div id="apiTestModal" class="modal-backdrop hidden">
+  <div class="glass-3d modal-card">
+    <div style="font-size: 2.3rem;">🔑</div>
+    <h2>Uji Status API Key Groq</h2>
+    <p>Semak sama ada API Key Groq anda di dalam Google Sheet (tab <b>apikey</b> sel <b>A1</b>) atau kunci baharu sedang hidup dan aktif.</p>
+
+    <div id="apiTestResultBox" class="api-test-result-box">
+      Status: Klik butang "Uji Kunci Sekarang" di bawah untuk menyemak sambungan ke Groq.
+    </div>
+
+    <input type="text" id="inputCustomApiKey" class="input-3d" placeholder="Pilihan: Tampal API Key baharu (gsk_...) di sini" autocomplete="off">
+
+    <div class="btn-row">
+      <button id="btnRunKeyTest" class="btn-3d emerald-3d">
+        ⚡ Uji Kunci Sekarang
+      </button>
+      <button id="btnSaveKeyToSheet" class="btn-3d primary-3d">
+        💾 Simpan ke Sheet A1
+      </button>
+    </div>
+
+    <button id="btnCloseApiModal" class="btn-3d" style="width: 100%;">
+      Tutup Panel
     </button>
   </div>
 </div>
@@ -674,6 +739,9 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
       <div class="pill-3d">
         👤 <span id="activeUserBadge">Tetamu</span>
       </div>
+      <button id="btnOpenApiTesterTop" class="btn-3d emerald-3d" style="padding: 7px 14px; font-size: 0.78rem;">
+        🔑 Uji API Key
+      </button>
       <button id="btnChangeName" class="btn-3d" style="padding: 7px 13px; font-size: 0.76rem;">
         Tukar Nama
       </button>
@@ -709,7 +777,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
 
       <div id="faceScanStatus" class="scan-progress"></div>
 
-      <!-- Butang Kawalan Kamera, Daftar Wajah & Mod Mikrofon -->
+      <!-- Butang Kawalan Kamera, Daftar Wajah, Uji API Key & Mod Mikrofon -->
       <div class="controls-group">
         <button id="btnRegisterFace" class="btn-3d primary-3d">
           📸 Rakam & Ingat Setiap Pixel Wajah Saya (3 Saat)
@@ -732,6 +800,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
             🔊 Suara AI: ON
           </button>
         </div>
+
+        <button id="btnOpenApiTesterSide" class="btn-3d emerald-3d">
+          🔑 Semak & Uji Status API Key Groq (Hidup / Mati)
+        </button>
       </div>
     </section>
 
@@ -775,10 +847,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
   let webcamStream = null;
   let detectionInterval = null;
 
-  let isCameraHidden = false;   // Sembunyi paparan video tetapi kamera masih boleh jalan
-  let isMicOnlyMode = false;    // Tutup kamera terus, berbual guna mikrofon sahaja
-  let isHandsfree = true;       // Mod dengar berterusan seperti kawan baik
-  let isVoiceOutputOn = true;   // Suara balas AI (TTS)
+  let isCameraHidden = false;
+  let isMicOnlyMode = false;
+  let isHandsfree = true;
+  let isVoiceOutputOn = true;
   let isAiSpeaking = false;
   let isListening = false;
 
@@ -802,6 +874,15 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
   const activeUserBadge = document.getElementById("activeUserBadge");
   const aiDot = document.getElementById("aiDot");
   const aiStatusText = document.getElementById("aiStatusText");
+
+  const apiTestModal = document.getElementById("apiTestModal");
+  const apiTestResultBox = document.getElementById("apiTestResultBox");
+  const inputCustomApiKey = document.getElementById("inputCustomApiKey");
+  const btnRunKeyTest = document.getElementById("btnRunKeyTest");
+  const btnSaveKeyToSheet = document.getElementById("btnSaveKeyToSheet");
+  const btnCloseApiModal = document.getElementById("btnCloseApiModal");
+  const btnOpenApiTesterTop = document.getElementById("btnOpenApiTesterTop");
+  const btnOpenApiTesterSide = document.getElementById("btnOpenApiTesterSide");
 
   const videoEl = document.getElementById("webcam");
   const canvasEl = document.getElementById("overlay");
@@ -861,6 +942,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     mulakanSistemPenuh();
   });
 
+  inputUserName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") btnStartApp.click();
+  });
+
   btnChangeName.addEventListener("click", () => {
     inputUserName.value = userName;
     onboardingModal.classList.remove("hidden");
@@ -876,14 +961,168 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     sediakanPengiktirafanSuara();
 
     if (chatHistory.length === 0) {
-      const sapaan = `Hai ${userName}! Aku dah sedia. Kamera dan mikrofon dah aktif—kau boleh borak terus dengan aku macam kawan baik, atau tekan "Guna Mic Sahaja" kalau nak tutup kamera.`;
+      const sapaan = `Hai ${userName}! Aku dah sedia. Kamera dan mikrofon dah aktif—kau boleh borak terus dengan aku macam kawan baik, atau tekan "Uji API Key" kalau nak pastikan sambungan Groq kita hidup.`;
       tambahMesejKeSkrin("ai", sapaan);
       cakapSuaraAI(sapaan);
     }
   }
 
   /********************************************************************
-   * 2. SEGERAK API KEY GROQ (DARI TAB 'apikey' A1) & MEMORI WAJAH
+   * 2. FUNGSI UJI API KEY GROQ (HIDUP ATAU MATI) & SIMPAN KE SHEET
+   ********************************************************************/
+  function bukaModalUjiApi() {
+    apiTestModal.classList.remove("hidden");
+    if (groqApiKey) {
+      const masked = groqApiKey.substring(0, 7) + "..." + groqApiKey.substring(groqApiKey.length - 4);
+      apiTestResultBox.className = "api-test-result-box";
+      apiTestResultBox.innerHTML = `Kunci Semasa Dikesan: <b>${masked}</b><br>Klik <b>"⚡ Uji Kunci Sekarang"</b> untuk menguji sama ada kunci ini hidup atau mati.`;
+    } else {
+      apiTestResultBox.className = "api-test-result-box";
+      apiTestResultBox.innerHTML = `Tiada kunci dalam memori pelayar. Sistem akan menyemak terus daripada Google Sheet (tab <b>apikey</b> sel <b>A1</b>) apabila anda menekan butang uji.`;
+    }
+  }
+
+  btnOpenApiTesterTop.addEventListener("click", bukaModalUjiApi);
+  btnOpenApiTesterSide.addEventListener("click", bukaModalUjiApi);
+  btnCloseApiModal.addEventListener("click", () => apiTestModal.classList.add("hidden"));
+
+  btnRunKeyTest.addEventListener("click", async () => {
+    btnRunKeyTest.disabled = true;
+    btnRunKeyTest.textContent = "⏳ Menguji...";
+    apiTestResultBox.className = "api-test-result-box";
+    apiTestResultBox.innerHTML = "🔄 Sedang menghubungi pelayan Groq untuk menguji kunci API...";
+
+    const customVal = inputCustomApiKey.value.trim();
+
+    try {
+      // Pilihan A: Jika pengguna taip kunci di kotak input atau sudah ada groqApiKey, uji terus ke Groq
+      let keyUntukUji = customVal || groqApiKey;
+
+      // Jika tiada lagi, tarik dari Google Sheet dahulu
+      if (!keyUntukUji && GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
+        await segerakKonfigurasiDariSheet();
+        keyUntukUji = groqApiKey;
+      }
+
+      if (keyUntukUji) {
+        const mula = performance.now();
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${keyUntukUji}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "user", content: "Jawab: HIDUP" }],
+            max_tokens: 10
+          })
+        });
+
+        const selaMasa = Math.round(performance.now() - mula);
+        const data = await res.json();
+
+        if (res.ok && data.choices) {
+          groqApiKey = keyUntukUji;
+          localStorage.setItem("aura_groq_key_cache", groqApiKey);
+          const masked = keyUntukUji.substring(0, 7) + "..." + keyUntukUji.substring(keyUntukUji.length - 4);
+
+          apiTestResultBox.className = "api-test-result-box alive";
+          apiTestResultBox.innerHTML = `✅ <b>API KEY HIDUP & AKTIF!</b><br>• Kunci: <code>${masked}</code><br>• Model: <code>llama-3.3-70b-versatile</code><br>• Kelajuan Respons: <b>${selaMasa} ms</b><br>• Status: Sedia untuk berbual!`;
+
+          aiDot.className = "dot-ind online";
+          aiStatusText.textContent = `Groq Hidup (${selaMasa}ms)`;
+          btnRunKeyTest.disabled = false;
+          btnRunKeyTest.textContent = "⚡ Uji Kunci Sekarang";
+          return;
+        } else {
+          const msgRalat = (data.error && data.error.message) ? data.error.message : `Kod HTTP ${res.status}`;
+          throw new Error(msgRalat);
+        }
+      }
+
+      // Pilihan B: Uji melalui pelayan Google Apps Script (Code.gs)
+      if (GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
+        const resGas = await fetch(GAS_URL, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "testKey",
+            customKey: customVal
+          })
+        });
+        const dataGas = await resGas.json();
+        if (dataGas.alive) {
+          if (dataGas.apiKey) {
+            groqApiKey = dataGas.apiKey;
+            localStorage.setItem("aura_groq_key_cache", groqApiKey);
+          }
+          apiTestResultBox.className = "api-test-result-box alive";
+          apiTestResultBox.innerHTML = `✅ <b>API KEY HIDUP (Melalui Google Sheet)!</b><br>• Kunci: <code>${dataGas.maskedKey}</code><br>• Kelajuan: <b>${dataGas.latencyMs} ms</b><br>• Status: Sedia digunakan!`;
+          aiDot.className = "dot-ind online";
+          aiStatusText.textContent = "Groq Hidup & Aktif";
+        } else {
+          throw new Error(dataGas.message || "Kunci tidak sah di dalam Sheet.");
+        }
+      } else {
+        throw new Error("Sila masukkan API Key Groq (gsk_...) di dalam kotak di bawah atau pastikan URL Apps Script pada baris ke-5 telah diisi.");
+      }
+    } catch (err) {
+      apiTestResultBox.className = "api-test-result-box dead";
+      apiTestResultBox.innerHTML = `❌ <b>API KEY MATI / TIDAK SAH!</b><br>• Punca Ralat: ${err.message}<br>• Solusi: Cipta kunci baharu di <b>console.groq.com</b> dan tampal di kotak bawah atau di tab <b>apikey</b> sel <b>A1</b>.`;
+      aiDot.className = "dot-ind error";
+      aiStatusText.textContent = "API Key Bermasalah";
+    }
+
+    btnRunKeyTest.disabled = false;
+    btnRunKeyTest.textContent = "⚡ Uji Kunci Sekarang";
+  });
+
+  btnSaveKeyToSheet.addEventListener("click", async () => {
+    const newKey = inputCustomApiKey.value.trim();
+    if (!newKey) {
+      alert("Sila tampal API Key Groq baharu (bermula dengan gsk_...) di dalam kotak input terlebih dahulu.");
+      return;
+    }
+
+    groqApiKey = newKey;
+    localStorage.setItem("aura_groq_key_cache", newKey);
+
+    if (GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
+      btnSaveKeyToSheet.disabled = true;
+      btnSaveKeyToSheet.textContent = "⏳ Menyimpan...";
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "updateKeyInSheet",
+            newKey: newKey
+          })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          apiTestResultBox.className = "api-test-result-box alive";
+          apiTestResultBox.innerHTML = `💾 <b>Berjaya!</b> Kunci baharu telah disimpan ke dalam memori aplikasi dan Google Sheet (tab <b>apikey</b> sel <b>A1</b>). Klik "Uji Kunci Sekarang" untuk mengesahkan.`;
+        } else {
+          throw new Error(data.message);
+        }
+      } catch (e) {
+        apiTestResultBox.className = "api-test-result-box alive";
+        apiTestResultBox.innerHTML = `💾 Kunci telah disimpan secara tempatan di pelayar anda dan sedia digunakan!`;
+      }
+      btnSaveKeyToSheet.disabled = false;
+      btnSaveKeyToSheet.textContent = "💾 Simpan ke Sheet A1";
+    } else {
+      apiTestResultBox.className = "api-test-result-box alive";
+      apiTestResultBox.innerHTML = `💾 Kunci telah disimpan dalam memori pelayar anda! Klik "Uji Kunci Sekarang" untuk menguji.`;
+    }
+  });
+
+  /********************************************************************
+   * 3. SEGERAK API KEY GROQ (DARI TAB 'apikey' A1) & MEMORI WAJAH
    ********************************************************************/
   async function segerakKonfigurasiDariSheet() {
     if (!GAS_URL || GAS_URL.includes("MASUKKAN_URL")) {
@@ -893,15 +1132,17 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     }
     try {
       aiStatusText.textContent = "Menyambung Google Sheet...";
-      const res = await fetch(`${GAS_URL}?action=getConfig`);
+      const res = await fetch(`${GAS_URL}?action=getConfig&t=${Date.now()}`, {
+        method: "GET",
+        redirect: "follow"
+      });
       const data = await res.json();
       if (data.status === "success") {
         if (data.apiKey) {
-          groqApiKey = data.apiKey;
+          groqApiKey = data.apiKey.trim();
           localStorage.setItem("aura_groq_key_cache", groqApiKey);
         }
         if (Array.isArray(data.faces) && data.faces.length > 0) {
-          // Gabung memori wajah dari Google Sheet ke memori tempatan
           data.faces.forEach(remoteFace => {
             const idx = faceMemoryList.findIndex(f => f.name.toLowerCase() === remoteFace.name.toLowerCase());
             if (idx >= 0) {
@@ -912,21 +1153,23 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
           });
           localStorage.setItem("aura_face_memory_v1", JSON.stringify(faceMemoryList));
         }
-        aiStatusText.textContent = "Groq & Memori Aktif";
-        aiDot.classList.add("online");
+        aiStatusText.textContent = "Groq & Sheet Aktif";
+        aiDot.className = "dot-ind online";
+      } else {
+        aiStatusText.textContent = "Semak Tab apikey A1";
+        aiDot.className = "dot-ind error";
       }
     } catch (err) {
-      aiStatusText.textContent = "Sedia (Cache Aktif)";
-      aiDot.classList.add("online");
+      aiStatusText.textContent = "Mod Sandaran Aktif";
+      aiDot.className = "dot-ind online";
     }
   }
 
   /********************************************************************
-   * 3. PENGESAN WAJAH 128-VEKTOR & EMOSI MASA NYATA (face-api.js)
+   * 4. PENGESAN WAJAH 128-VEKTOR & EMOSI MASA NYATA (face-api.js)
    ********************************************************************/
-async function muatModelWajah() {
+  async function muatModelWajah() {
     try {
-      aiStatusText.textContent = "Memuatkan AI Wajah...";
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
@@ -935,11 +1178,8 @@ async function muatModelWajah() {
       ]);
       modelsLoaded = true;
       binaSemulaFaceMatcher();
-      aiStatusText.textContent = "AI Wajah & Groq Aktif";
-      aiDot.classList.add("online");
     } catch (e) {
       console.error("Ralat muat model wajah:", e);
-      aiStatusText.textContent = "Mod Suara Aktif";
     }
   }
 
@@ -953,11 +1193,6 @@ async function muatModelWajah() {
       return new faceapi.LabeledFaceDescriptors(item.name, floatArrays);
     });
     faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.52);
-  }
-
-  // Baiki panggilan nama fungsi tanpa jarak
-  function bina_semula_matcher() {
-    binaSemulaFaceMatcher();
   }
 
   async function hidupkanKamera() {
@@ -1010,7 +1245,6 @@ async function muatModelWajah() {
       ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
       if (detection) {
-        // 1. Tentukan Emosi Utama
         const exp = detection.expressions;
         let topEmotionKey = "neutral";
         let maxScore = 0;
@@ -1023,7 +1257,6 @@ async function muatModelWajah() {
         currentEmotion = EMOTION_MAP[topEmotionKey] || "😊 Tenang / Neutral";
         detectedEmotionEl.textContent = currentEmotion;
 
-        // 2. Padankan Vektor 128-Descriptor Wajah
         if (faceMatcher) {
           const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
           if (bestMatch.label !== "unknown") {
@@ -1041,7 +1274,6 @@ async function muatModelWajah() {
           detectedIdentityEl.textContent = `👤 ${userName} (Belum Rakam Vektor)`;
         }
 
-        // Lukis Kotak HUD 3D jika kamera tidak disembunyikan
         if (!isCameraHidden) {
           const box = detection.detection.box;
           ctx.strokeStyle = "rgba(14, 165, 233, 0.9)";
@@ -1055,7 +1287,7 @@ async function muatModelWajah() {
   }
 
   /********************************************************************
-   * 4. RAKAM & INGAT SETIAP PIXEL WAJAH (128-VEKTOR KE MEMORI & SHEET)
+   * 5. RAKAM & INGAT SETIAP PIXEL WAJAH (128-VEKTOR KE MEMORI & SHEET)
    ********************************************************************/
   btnRegisterFace.addEventListener("click", async () => {
     if (isMicOnlyMode) {
@@ -1092,7 +1324,6 @@ async function muatModelWajah() {
       return;
     }
 
-    // Simpan ke LocalStorage
     const existingIdx = faceMemoryList.findIndex(f => f.name.toLowerCase() === userName.toLowerCase());
     const faceRecord = { name: userName, descriptors: samples };
     if (existingIdx >= 0) {
@@ -1106,10 +1337,10 @@ async function muatModelWajah() {
     faceScanStatus.textContent = `✨ Berjaya! Wajah ${userName} telah diingati sepenuhnya dalam memori.`;
     btnRegisterFace.disabled = false;
 
-    // Simpan ke Google Sheet & Google Drive melalui Code.gs
     if (GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
       fetch(GAS_URL, {
         method: "POST",
+        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "saveFace",
@@ -1121,7 +1352,7 @@ async function muatModelWajah() {
   });
 
   /********************************************************************
-   * 5. KAWALAN SEMBUNYI KAMERA & MOD MIKROFON SAHAJA
+   * 6. KAWALAN SEMBUNYI KAMERA & MOD MIKROFON SAHAJA
    ********************************************************************/
   function aktifkanPaparanOrb(aktif, teksStatus) {
     if (aktif) {
@@ -1132,7 +1363,6 @@ async function muatModelWajah() {
     }
   }
 
-  // Pilihan 1: Sembunyi Paparan Kamera (Visual kamera disembunyikan di sebalik Sfera 3D)
   btnHideCam.addEventListener("click", () => {
     isCameraHidden = !isCameraHidden;
     if (isCameraHidden) {
@@ -1146,7 +1376,6 @@ async function muatModelWajah() {
     }
   });
 
-  // Pilihan 2: Mod Berbual Guna Mikrofon Sahaja (Matikan perkakasan kamera terus)
   btnMicOnlyMode.addEventListener("click", async () => {
     isMicOnlyMode = !isMicOnlyMode;
     if (isMicOnlyMode) {
@@ -1180,7 +1409,7 @@ async function muatModelWajah() {
   });
 
   /********************************************************************
-   * 6. INTERAKSI SUARA (SPEECH-TO-TEXT & TEXT-TO-SPEECH KAWAN BAIK)
+   * 7. INTERAKSI SUARA (SPEECH-TO-TEXT & TEXT-TO-SPEECH KAWAN BAIK)
    ********************************************************************/
   let recognition = null;
 
@@ -1284,7 +1513,7 @@ async function muatModelWajah() {
   }
 
   /********************************************************************
-   * 7. PENGHANTARAN MESEJ KE GROQ (MELALUI SHEET KEY ATAU APPS SCRIPT)
+   * 8. PENGHANTARAN MESEJ KE GROQ (DENGAN AUTO-FALLBACK PINTAR)
    ********************************************************************/
   btnSendText.addEventListener("click", () => {
     const teks = textMessageInput.value.trim();
@@ -1316,28 +1545,44 @@ async function muatModelWajah() {
     try {
       let balasan = "";
 
-      // Jika kunci API Groq telah diambil daripada tab 'apikey' A1, panggil terus untuk kelajuan milisaat
+      if (!groqApiKey && GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
+        await segerakKonfigurasiDariSheet();
+      }
+
+      // Cubaan 1: Panggil Groq terus jika kunci tersedia
       if (groqApiKey) {
-        balasan = await panggilGroqTerus(mesej, labelEmosiSemasa, modKameraLabel);
-        // Rekod log ke Google Sheet di belakang tabir
-        if (GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
-          fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-              action: "chat",
-              name: userName,
-              emotion: labelEmosiSemasa,
-              cameraMode: modKameraLabel,
-              message: mesej,
-              history: chatHistory.slice(-6)
-            })
-          }).catch(() => {});
+        try {
+          balasan = await panggilGroqTerus(mesej, labelEmosiSemasa, modKameraLabel);
+          if (GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
+            fetch(GAS_URL, {
+              method: "POST",
+              redirect: "follow",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "saveLogOnly",
+                name: userName,
+                emotion: labelEmosiSemasa,
+                cameraMode: modKameraLabel,
+                message: mesej,
+                reply: balasan
+              })
+            }).catch(() => {});
+          }
+        } catch (directErr) {
+          console.warn("Panggilan terus gagal, mencuba pelayan Apps Script:", directErr.message);
+          localStorage.removeItem("aura_groq_key_cache");
+          groqApiKey = "";
         }
-      } else if (GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
-        // Panggil melalui Web App Code.gs (mengambil kunci terus dari Sheet 'apikey' A1)
+      }
+
+      // Cubaan 2: Jika panggilan terus gagal, panggil melalui Code.gs
+      if (!balasan) {
+        if (!GAS_URL || GAS_URL.includes("MASUKKAN_URL")) {
+          throw new Error("Sila klik butang '🔑 Uji API Key' untuk memasukkan kunci Groq atau pastikan URL Apps Script pada baris ke-5 telah diisi.");
+        }
         const res = await fetch(GAS_URL, {
           method: "POST",
+          redirect: "follow",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "chat",
@@ -1349,13 +1594,11 @@ async function muatModelWajah() {
           })
         });
         const data = await res.json();
-        if (data.status === "success") {
+        if (data.status === "success" && data.reply) {
           balasan = data.reply;
         } else {
-          throw new Error(data.message || "Gagal menghubungi Google Sheet.");
+          throw new Error(data.message || "Gagal memproses respons dari Code.gs");
         }
-      } else {
-        balasan = `Pastikan anda telah menampal URL Web App Google Apps Script pada baris ke-5 dalam fail index.html dan meletakkan kunci API Groq pada tab 'apikey' sel A1.`;
       }
 
       chatHistory.push({ role: "user", content: mesej });
@@ -1363,10 +1606,12 @@ async function muatModelWajah() {
       if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
       localStorage.setItem("aura_chat_history_v1", JSON.stringify(chatHistory));
 
+      aiDot.className = "dot-ind online";
       tambahMesejKeSkrin("ai", balasan, labelEmosiSemasa);
       cakapSuaraAI(balasan);
     } catch (err) {
-      const ralatTeks = "Maaf sahabat, sambungan ke Groq tergendala sebentar. Cuba semak tab 'apikey' sel A1 atau sambungan internet anda.";
+      aiDot.className = "dot-ind error";
+      const ralatTeks = `⚠️ Ralat API Key Groq: ${err.message}. Sila tekan butang "🔑 Uji API Key" untuk menyemak atau menukar kunci baharu.`;
       tambahMesejKeSkrin("ai", ralatTeks);
     }
   }
@@ -1387,7 +1632,7 @@ Peraturan Penting:
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${groqApiKey}`,
+        "Authorization": `Bearer ${groqApiKey.trim()}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
