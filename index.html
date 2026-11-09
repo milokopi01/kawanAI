@@ -2,10 +2,10 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLrs8eBgqKV7fS0ILMWzwaohloFgGWHZ0pTqPxrmT1pYkY/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>AURA 3D — Sahabat AI & Pengesan Wajah Pintar</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon.png">
@@ -14,801 +14,223 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
 <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg-primary: #f4f8fc;
-    --glass-white: rgba(255, 255, 255, 0.78);
-    --glass-strong: rgba(255, 255, 255, 0.92);
-    --glass-border: rgba(255, 255, 255, 0.95);
-    --text-main: #1e293b;
-    --text-muted: #64748b;
-    --accent-blue: #0ea5e9;
-    --accent-indigo: #6366f1;
-    --accent-emerald: #10b981;
-    --accent-rose: #f43f5e;
-    --shadow-3d: 
-      0 20px 45px -12px rgba(100, 116, 139, 0.18),
-      0 4px 12px -2px rgba(100, 116, 139, 0.08),
-      inset 0 2px 4px rgba(255, 255, 255, 1),
-      inset 0 -3px 6px rgba(203, 213, 225, 0.45);
-    --shadow-btn:
-      0 10px 20px -5px rgba(14, 165, 233, 0.22),
-      inset 0 2px 3px rgba(255, 255, 255, 0.95),
-      inset 0 -3px 5px rgba(148, 163, 184, 0.35);
-  }
-
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  body {
-    min-height: 100vh;
-    background: radial-gradient(circle at 15% 15%, #ffffff 0%, #eef5fc 45%, #e2ecf7 100%);
-    color: var(--text-main);
-    overflow-x: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .bg-orb {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(45px);
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.75;
-    animation: floatOrb 12s infinite alternate ease-in-out;
-  }
-  .orb-1 { width: 320px; height: 320px; background: linear-gradient(135deg, #ffffff, #bae6fd); top: -80px; left: -80px; }
-  .orb-2 { width: 380px; height: 380px; background: linear-gradient(135deg, #e0e7ff, #ffffff); bottom: -100px; right: -80px; animation-delay: -5s; }
-  .orb-3 { width: 220px; height: 220px; background: linear-gradient(135deg, #d1fae5, #ffffff); top: 40%; left: 50%; transform: translate(-50%, -50%); animation-delay: -2s; }
-
-  @keyframes floatOrb {
-    0% { transform: translateY(0px) scale(1); }
-    100% { transform: translateY(25px) scale(1.06); }
-  }
-
-  .glass-3d {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 100%);
-    backdrop-filter: blur(24px) saturate(190%);
-    -webkit-backdrop-filter: blur(24px) saturate(190%);
-    border: 1.5px solid var(--glass-border);
-    box-shadow: var(--shadow-3d);
-    border-radius: 28px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .glass-3d::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -120%;
-    width: 65%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
-    transform: skewX(-25deg);
-    transition: 0.7s;
-    pointer-events: none;
-  }
-  .glass-3d:hover::before {
-    left: 140%;
-  }
-
-  .app-wrapper {
-    position: relative;
-    z-index: 2;
-    max-width: 1180px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    flex: 1;
-  }
-
-  .top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 22px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .brand-box {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .brand-logo {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
-    box-shadow: 
-      0 8px 18px rgba(14, 165, 233, 0.2),
-      inset 0 2px 3px #ffffff,
-      inset 0 -2px 4px rgba(186, 230, 253, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    border: 1px solid #ffffff;
-  }
-
-  .brand-title h1 {
-    font-size: 1.2rem;
-    font-weight: 800;
-    background: linear-gradient(90deg, #0f172a, #0284c7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.3px;
-  }
-
-  .brand-title p {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    font-weight: 600;
-  }
-
-  .status-pills {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .pill-3d {
-    padding: 8px 15px;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid #ffffff;
-    box-shadow: 
-      0 4px 10px rgba(100, 116, 139, 0.1),
-      inset 0 1px 2px #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    color: var(--text-main);
-  }
-
-  .dot-ind {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: #94a3b8;
-  }
-  .dot-ind.online {
-    background: var(--accent-emerald);
-    box-shadow: 0 0 10px var(--accent-emerald);
-  }
-  .dot-ind.error {
-    background: var(--accent-rose);
-    box-shadow: 0 0 10px var(--accent-rose);
-  }
-
-  .main-grid {
-    display: grid;
-    grid-template-columns: 420px 1fr;
-    gap: 18px;
-    flex: 1;
-  }
-
-  @media (max-width: 920px) {
-    .main-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .vision-panel {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .camera-stage {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    border-radius: 22px;
-    overflow: hidden;
-    background: linear-gradient(145deg, #f8fafc, #e2e8f0);
-    box-shadow: 
-      inset 0 4px 12px rgba(15, 23, 42, 0.08),
-      0 10px 25px rgba(100, 116, 139, 0.12);
-    border: 2px solid #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  video#webcam {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1);
-    transition: opacity 0.4s ease;
-  }
-
-  canvas#overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    transform: scaleX(-1);
-    pointer-events: none;
-  }
-
-  .crystal-orb-container {
-    position: absolute;
-    inset: 0;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(circle at center, #ffffff 0%, #f0f7ff 70%, #e0f2fe 100%);
-    z-index: 5;
-    padding: 20px;
-    text-align: center;
-  }
-
-  .crystal-orb-container.active {
-    display: flex;
-  }
-
-  .orb-3d-sphere {
-    width: 125px;
-    height: 125px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e0f2fe 45%, #7dd3fc 85%, #0284c7 100%);
-    box-shadow:
-      0 20px 40px rgba(14, 165, 233, 0.3),
-      inset 0 8px 16px rgba(255, 255, 255, 0.95),
-      inset 0 -10px 20px rgba(2, 132, 199, 0.35);
-    position: relative;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    animation: breatheOrb 3.5s infinite ease-in-out;
-  }
-
-  .orb-3d-sphere.speaking {
-    animation: pulseSpeak 0.65s infinite alternate ease-in-out;
-    box-shadow:
-      0 0 50px rgba(14, 165, 233, 0.65),
-      inset 0 8px 20px #ffffff,
-      inset 0 -12px 24px rgba(99, 102, 241, 0.5);
-  }
-
-  .orb-3d-sphere.listening {
-    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #d1fae5 45%, #34d399 85%, #059669 100%);
-    box-shadow:
-      0 0 45px rgba(16, 185, 129, 0.55),
-      inset 0 8px 16px #ffffff;
-  }
-
-  @keyframes breatheOrb {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.06); }
-  }
-
-  @keyframes pulseSpeak {
-    0% { transform: scale(0.96); }
-    100% { transform: scale(1.16); }
-  }
-
-  .orb-status-label {
-    margin-top: 16px;
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: #0369a1;
-    background: rgba(255, 255, 255, 0.85);
-    padding: 6px 16px;
-    border-radius: 999px;
-    border: 1px solid #ffffff;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.12);
-  }
-
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .metric-card {
-    padding: 12px 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.86);
-    border: 1px solid #ffffff;
-    box-shadow: 
-      0 6px 16px rgba(100, 116, 139, 0.08),
-      inset 0 2px 3px #ffffff;
-  }
-
-  .metric-label {
-    font-size: 0.71rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .metric-val {
-    font-size: 0.94rem;
-    font-weight: 800;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .controls-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .btn-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .btn-3d {
-    appearance: none;
-    border: 1.5px solid #ffffff;
-    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
-    color: var(--text-main);
-    font-weight: 700;
-    font-size: 0.83rem;
-    padding: 12px 14px;
-    border-radius: 16px;
-    cursor: pointer;
-    box-shadow: var(--shadow-btn);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .btn-3d:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 14px 24px -5px rgba(14, 165, 233, 0.28),
-      inset 0 2px 4px #ffffff;
-  }
-
-  .btn-3d:active {
-    transform: translateY(1px);
-  }
-
-  .btn-3d.active-toggle {
-    background: linear-gradient(145deg, #e0f2fe 0%, #bae6fd 100%);
-    color: #0369a1;
-    border-color: #ffffff;
-  }
-
-  .btn-3d.primary-3d {
-    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 
-      0 12px 24px -6px rgba(37, 99, 235, 0.45),
-      inset 0 2px 3px rgba(255, 255, 255, 0.45);
-  }
-
-  .btn-3d.emerald-3d {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 
-      0 12px 24px -6px rgba(16, 185, 129, 0.4),
-      inset 0 2px 3px rgba(255, 255, 255, 0.45);
-  }
-
-  .chat-panel {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    height: 650px;
-  }
-
-  @media (max-width: 920px) {
-    .chat-panel {
-      height: 540px;
-    }
-  }
-
-  .chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(203, 213, 225, 0.5);
-  }
-
-  .chat-header-info h2 {
-    font-size: 1.05rem;
-    font-weight: 800;
-  }
-
-  .chat-header-info p {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  .chat-stream {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    scroll-behavior: smooth;
-  }
-
-  .msg-bubble {
-    max-width: 82%;
-    padding: 14px 18px;
-    border-radius: 22px;
-    font-size: 0.93rem;
-    line-height: 1.55;
-    position: relative;
-    animation: popMsg 0.25s ease-out;
-  }
-
-  @keyframes popMsg {
-    from { opacity: 0; transform: translateY(8px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  .msg-ai {
-    align-self: flex-start;
-    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-    color: var(--text-main);
-    border: 1.5px solid #ffffff;
-    border-bottom-left-radius: 6px;
-    box-shadow: 
-      0 10px 25px -6px rgba(100, 116, 139, 0.15),
-      inset 0 2px 3px #ffffff;
-  }
-
-  .msg-user {
-    align-self: flex-end;
-    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-bottom-right-radius: 6px;
-    box-shadow: 
-      0 10px 25px -6px rgba(14, 165, 233, 0.35),
-      inset 0 1px 2px rgba(255, 255, 255, 0.4);
-  }
-
-  .msg-meta {
-    font-size: 0.7rem;
-    opacity: 0.72;
-    margin-top: 6px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .chat-input-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1.5px solid #ffffff;
-    box-shadow: 
-      0 8px 20px rgba(100, 116, 139, 0.1),
-      inset 0 2px 4px #ffffff;
-  }
-
-  .mic-fab {
-    width: 52px;
-    height: 52px;
-    border-radius: 18px;
-    border: 1.5px solid #ffffff;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #ffffff;
-    font-size: 1.35rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 
-      0 10px 20px -4px rgba(16, 185, 129, 0.45),
-      inset 0 2px 3px rgba(255, 255, 255, 0.5);
-    transition: all 0.2s ease;
-  }
-
-  .mic-fab.listening {
-    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-    box-shadow: 0 0 25px rgba(244, 63, 94, 0.65);
-    animation: pulseMic 1s infinite alternate;
-  }
-
-  @keyframes pulseMic {
-    from { transform: scale(1); }
-    to { transform: scale(1.08); }
-  }
-
-  .chat-text-input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 0.95rem;
-    color: var(--text-main);
-    padding: 8px 10px;
-    outline: none;
-    font-weight: 500;
-  }
-
-  .send-btn {
-    padding: 12px 20px;
-    border-radius: 16px;
-    border: none;
-    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 0.88rem;
-    cursor: pointer;
-    box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.4);
-  }
-
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(241, 245, 249, 0.78);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
-  }
-
-  .modal-backdrop.hidden {
-    display: none;
-  }
-
-  .modal-card {
-    max-width: 460px;
-    width: 100%;
-    padding: 28px 24px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .modal-card h2 {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--text-main);
-  }
-
-  .modal-card p {
-    font-size: 0.86rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-  }
-
-  .input-3d {
-    width: 100%;
-    padding: 14px 16px;
-    border-radius: 16px;
-    border: 1.5px solid #ffffff;
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 
-      inset 0 3px 6px rgba(148, 163, 184, 0.2),
-      0 6px 14px rgba(100, 116, 139, 0.08);
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-main);
-    outline: none;
-    text-align: center;
-  }
-
-  .api-test-result-box {
-    padding: 14px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1.5px solid #ffffff;
-    font-size: 0.84rem;
-    font-weight: 700;
-    line-height: 1.55;
-    text-align: left;
-    box-shadow: inset 0 2px 5px rgba(100, 116, 139, 0.1);
-  }
-
-  .api-test-result-box.alive {
-    background: linear-gradient(145deg, #ecfdf5, #d1fae5);
-    color: #065f46;
-    border-color: #a7f3d0;
-  }
-
-  .api-test-result-box.dead {
-    background: linear-gradient(145deg, #fff1f2, #ffe4e6);
-    color: #9f1239;
-    border-color: #fecdd3;
-  }
-
-  .scan-progress {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #0284c7;
-    min-height: 18px;
-  }
-
-  /* ===== AURA NEBULA — TEMA GELAP PENUH + ZARAH ===== */
-  :root{--text-main:#e6f6ff;--text-muted:#8fb3c9;--glass-white:rgba(10,24,38,.55);--glass-strong:rgba(10,24,38,.72);--glass-border:rgba(120,220,255,.16);
-    --shadow-3d:0 20px 50px -15px rgba(0,0,0,.6),inset 0 1px 0 rgba(160,230,255,.12);--shadow-btn:0 0 18px rgba(56,189,248,.25),inset 0 1px 0 rgba(255,255,255,.12)}
-  html,body{background:#02060c!important;color:var(--text-main)!important}
-  body{background:radial-gradient(ellipse at 50% 40%,#06202e 0%,#030a12 55%,#010307 100%)!important}
-  .bg-orb{display:none!important}
-  #auraParticles{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
-  body>*:not(#auraParticles):not(script){position:relative;z-index:1}
-  .modal-backdrop{z-index:50!important}
-  [class*="card"],[class*="panel"],header,section,.chat-input-bar,.metric-box,.modal-card{background:var(--glass-white)!important;border-color:var(--glass-border)!important;
-    backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);color:var(--text-main)!important;box-shadow:var(--shadow-3d)!important}
-  .btn-3d{background:rgba(20,50,70,.55)!important;color:#d8f3ff!important;border:1px solid rgba(120,220,255,.22)!important;box-shadow:var(--shadow-btn)!important;transition:transform .15s,box-shadow .2s!important}
-  .btn-3d:hover{transform:translateY(-1px);box-shadow:0 0 26px rgba(56,189,248,.45)!important}
-  .primary-3d,.send-btn,.mic-fab{background:linear-gradient(135deg,#0ea5e9,#22d3ee)!important;color:#02131c!important;border:none!important}
-  .input-3d,.chat-text-input{background:rgba(3,14,24,.7)!important;color:#e6f6ff!important;border:1px solid rgba(120,220,255,.2)!important}
-  .msg-ai{background:rgba(14,40,58,.7)!important;color:#e6f6ff!important;border:1px solid rgba(34,211,238,.2)!important}
-  .msg-user{background:linear-gradient(135deg,rgba(14,165,233,.85),rgba(34,211,238,.75))!important;color:#02131c!important}
-  .msg-meta,p,small{color:var(--text-muted)}
-  h1,h2,h3,.metric-val{color:#e6f6ff!important}
-  .orb-3d-sphere{opacity:0!important}
-  .crystal-orb-container{background:transparent!important}
-  .chat-stream{scroll-behavior:smooth}
-  .api-test-result-box{background:rgba(3,14,24,.7)!important;color:#e6f6ff!important}
+  /* ===== AURA NEBULA — SKRIN PENUH: ZARAH DI ATAS, BORAK + KAMERA DI BAWAH ===== */
+  :root{
+    --ink:#e6f6ff; --muted:#8fb3c9;
+    --glass:rgba(8,22,34,.55); --glass-strong:rgba(6,18,28,.86);
+    --line:rgba(120,220,255,.16); --line-strong:rgba(120,220,255,.3);
+    --cyan:#22d3ee; --sky:#0ea5e9; --rose:#f43f5e; --emerald:#10b981;
+    --glow:0 0 22px rgba(34,211,238,.35);
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#02060c;color:var(--ink)}
+  body{background:radial-gradient(ellipse at 50% 32%,#06202e 0%,#030a12 55%,#010307 100%);overscroll-behavior:none}
+
+  /* Kanvas zarah memenuhi seluruh skrin */
+  #auraParticles{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:block}
+
+  /* Label status halus di bawah aura */
+  .orb-status-label{
+    position:fixed;left:50%;top:var(--label-top,54vh);transform:translateX(-50%);
+    z-index:2;font-size:.78rem;font-weight:600;letter-spacing:.3px;color:rgba(200,240,255,.72);
+    text-shadow:0 0 12px rgba(34,211,238,.45);white-space:nowrap;pointer-events:none;
+    transition:opacity .4s ease;
+  }
+
+  /* Butang tetapan tersembunyi (sangat halus) */
+  .settings-fab{
+    position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:20;
+    width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+    background:rgba(8,22,34,.35);color:var(--ink);font-size:1.05rem;cursor:pointer;
+    opacity:.45;transition:opacity .2s, transform .2s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .settings-fab:hover,.settings-fab:focus-visible{opacity:1;transform:rotate(30deg)}
+  .status-dot-mini{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#94a3b8}
+  .status-dot-mini.online{background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
+  .status-dot-mini.error{background:var(--rose);box-shadow:0 0 8px var(--rose)}
+
+  /* ===== DOK BAWAH: BORAK + KAMERA ===== */
+  .bottom-dock{
+    position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:5;
+    width:100%;max-width:760px;padding:0 12px calc(12px + var(--safe-b));
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .chat-stream{
+    max-height:30vh;overflow-y:auto;padding:24px 4px 4px;display:flex;flex-direction:column;gap:10px;
+    scroll-behavior:smooth;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 34%);mask-image:linear-gradient(to bottom,transparent 0,#000 34%);
+  }
+  .chat-stream::-webkit-scrollbar{display:none}
+  .msg-bubble{max-width:84%;padding:11px 15px;border-radius:20px;font-size:.9rem;line-height:1.5;animation:popMsg .3s ease-out;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  @keyframes popMsg{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+  .msg-ai{align-self:flex-start;background:rgba(10,34,50,.62);color:var(--ink);border:1px solid rgba(34,211,238,.2);border-bottom-left-radius:6px}
+  .msg-user{align-self:flex-end;background:linear-gradient(135deg,rgba(14,165,233,.82),rgba(34,211,238,.72));color:#02131c;border-bottom-right-radius:6px}
+  .msg-meta{font-size:.66rem;opacity:.7;margin-top:4px;font-weight:600}
+  .msg-user .msg-meta{color:#032a3a}
+  .msg-ai .msg-meta{color:var(--muted)}
+
+  .chat-input-bar{
+    display:flex;align-items:center;gap:8px;padding:8px;border-radius:24px;
+    background:var(--glass);border:1px solid var(--line);
+    backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
+    box-shadow:0 20px 50px -15px rgba(0,0,0,.6),inset 0 1px 0 rgba(160,230,255,.1);
+  }
+
+  /* Kamera kecil di bawah */
+  .camera-stage{
+    position:relative;flex-shrink:0;width:52px;height:52px;border-radius:16px;overflow:hidden;cursor:pointer;
+    background:#041420;border:1.5px solid var(--line-strong);box-shadow:var(--glow);
+    transition:width .35s ease,height .35s ease,border-radius .35s ease;
+  }
+  .camera-stage.expanded{width:132px;height:100px;border-radius:18px}
+  .camera-stage.face-on{border-color:rgba(34,211,238,.75)}
+  video#webcam{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  canvas#overlay{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);pointer-events:none}
+  .crystal-orb-container{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#041420;font-size:1.3rem;z-index:3}
+  .crystal-orb-container.active{display:flex}
+
+  .mic-fab{
+    width:52px;height:52px;border-radius:16px;border:none;flex-shrink:0;cursor:pointer;font-size:1.3rem;
+    background:linear-gradient(135deg,#0ea5e9,#22d3ee);color:#02131c;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 18px rgba(34,211,238,.35);transition:transform .2s;
+  }
+  .mic-fab.listening{background:linear-gradient(135deg,#f43f5e,#e11d48);box-shadow:0 0 25px rgba(244,63,94,.65);animation:pulseMic 1s infinite alternate}
+  @keyframes pulseMic{from{transform:scale(1)}to{transform:scale(1.07)}}
+  .chat-text-input{flex:1;min-width:0;border:none;background:transparent;font-size:.95rem;color:var(--ink);padding:8px 6px;outline:none;font-weight:500}
+  .chat-text-input::placeholder{color:rgba(143,179,201,.7)}
+  .send-btn{padding:0 16px;height:44px;border-radius:14px;border:none;flex-shrink:0;cursor:pointer;font-weight:700;font-size:.85rem;
+    background:rgba(34,211,238,.16);color:var(--ink);border:1px solid var(--line-strong)}
+
+  /* ===== LACI TETAPAN (butang lain disembunyikan di sini) ===== */
+  .drawer-backdrop{position:fixed;inset:0;z-index:30;background:rgba(1,4,9,.45);opacity:0;pointer-events:none;transition:opacity .3s}
+  .drawer-backdrop.open{opacity:1;pointer-events:auto}
+  .settings-drawer{
+    position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(360px,92vw);padding:20px 16px calc(20px + var(--safe-b));
+    background:var(--glass-strong);border-left:1px solid var(--line);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    transform:translateX(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1);overflow-y:auto;display:flex;flex-direction:column;gap:12px;
+  }
+  .settings-drawer.open{transform:none}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between}
+  .drawer-head h2{font-size:1rem;font-weight:800}
+  .drawer-close{background:none;border:none;color:var(--ink);font-size:1.3rem;cursor:pointer;padding:4px 8px}
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap}
+  .pill-3d{padding:7px 12px;border-radius:999px;font-size:.76rem;font-weight:700;background:rgba(20,50,70,.5);border:1px solid var(--line);display:flex;align-items:center;gap:7px}
+  .dot-ind{width:8px;height:8px;border-radius:50%;background:#94a3b8}
+  .dot-ind.online{background:var(--emerald);box-shadow:0 0 10px var(--emerald)}
+  .dot-ind.error{background:var(--rose);box-shadow:0 0 10px var(--rose)}
+  .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .metric-card{padding:10px 12px;border-radius:14px;background:rgba(3,14,24,.6);border:1px solid var(--line)}
+  .metric-label{font-size:.64rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:3px}
+  .metric-val{font-size:.82rem;font-weight:800}
+  .scan-progress{font-size:.78rem;font-weight:700;color:var(--cyan);min-height:16px}
+  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .btn-3d{appearance:none;cursor:pointer;font-weight:700;font-size:.8rem;padding:11px 12px;border-radius:14px;
+    background:rgba(20,50,70,.55);color:#d8f3ff;border:1px solid rgba(120,220,255,.22);display:flex;align-items:center;justify-content:center;gap:6px;transition:box-shadow .2s,transform .15s}
+  .btn-3d:hover{box-shadow:0 0 22px rgba(56,189,248,.4)}
+  .btn-3d:active{transform:translateY(1px)}
+  .btn-3d:disabled{opacity:.5;cursor:wait}
+  .btn-3d.active-toggle{background:rgba(34,211,238,.22);border-color:rgba(34,211,238,.5)}
+  .btn-3d.primary-3d{background:linear-gradient(135deg,#0ea5e9,#22d3ee);color:#02131c;border:none}
+  .btn-3d.emerald-3d{background:linear-gradient(135deg,#10b981,#059669);color:#ecfdf5;border:none}
+  .api-test-result-box{padding:12px;border-radius:14px;background:rgba(3,14,24,.7);border:1px solid var(--line);font-size:.78rem;font-weight:600;line-height:1.55}
+  .api-test-result-box.alive{border-color:rgba(16,185,129,.5);color:#a7f3d0}
+  .api-test-result-box.dead{border-color:rgba(244,63,94,.5);color:#fecdd3}
+  .api-test-result-box code{color:#fff}
+
+  /* ===== MODAL NAMA ===== */
+  .modal-backdrop{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(1,4,9,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .modal-backdrop.hidden{display:none}
+  .modal-card{max-width:420px;width:100%;padding:26px 22px;text-align:center;display:flex;flex-direction:column;gap:14px;border-radius:26px;background:var(--glass-strong);border:1px solid var(--line)}
+  .modal-card h2{font-size:1.25rem;font-weight:800}
+  .modal-card p{font-size:.84rem;color:var(--muted);line-height:1.5}
+  .input-3d{width:100%;padding:13px 15px;border-radius:14px;border:1px solid rgba(120,220,255,.2);background:rgba(3,14,24,.7);color:var(--ink);font-size:.95rem;font-weight:600;outline:none;text-align:center}
+
+  @media (min-width:900px){ .chat-stream{max-height:32vh} }
 </style>
 </head>
 <body>
 
-<div class="bg-orb orb-1"></div>
-<div class="bg-orb orb-2"></div>
-<div class="bg-orb orb-3"></div>
+<canvas id="auraParticles"></canvas>
+<div id="orbStatusLabel" class="orb-status-label">Sedia mendengar</div>
+
+<!-- Butang tetapan halus (butang lain disembunyikan di dalam laci) -->
+<button id="btnOpenSettings" class="settings-fab" aria-label="Tetapan">⚙️<span id="miniDot" class="status-dot-mini"></span></button>
 
 <!-- Modal Hanya Masuk Nama Sahaja -->
 <div id="onboardingModal" class="modal-backdrop">
-  <div class="glass-3d modal-card">
-    <div style="font-size: 2.6rem;">💎</div>
+  <div class="modal-card">
+    <div style="font-size: 2.4rem;">💎</div>
     <h2>Selamat Datang ke AURA 3D</h2>
     <p>Masukkan nama anda dahulu supaya sahabat AI mengenali anda, mengingati memori wajah anda, dan bersedia berborak seperti manusia biasa.</p>
     <input type="text" id="inputUserName" class="input-3d" placeholder="Masukkan nama panggilan anda..." autocomplete="off">
-    <button id="btnStartApp" class="btn-3d primary-3d" style="padding: 15px; font-size: 0.96rem;">
+    <button id="btnStartApp" class="btn-3d primary-3d" style="padding: 14px; font-size: 0.94rem;">
       Mula Berbual Sekarang 🚀
     </button>
   </div>
 </div>
 
-<div class="app-wrapper">
-  <!-- Bar Atas -->
-  <header class="glass-3d top-bar">
-    <div class="brand-box">
-      <div class="brand-logo">💎</div>
-      <div class="brand-title">
-        <h1>AURA KRISTAL 3D</h1>
-        <p>Sahabat AI Serba Tahu • Memori Wajah 128-Vektor & Suara</p>
-      </div>
+<!-- Laci Tetapan -->
+<div id="drawerBackdrop" class="drawer-backdrop"></div>
+<aside id="settingsDrawer" class="settings-drawer" aria-label="Tetapan AURA">
+  <div class="drawer-head">
+    <h2>💎 Tetapan AURA</h2>
+    <button id="btnCloseSettings" class="drawer-close" aria-label="Tutup">✕</button>
+  </div>
+
+  <div class="pill-row">
+    <div class="pill-3d"><span id="aiDot" class="dot-ind"></span><span id="aiStatusText">Memuatkan Enjin...</span></div>
+    <div class="pill-3d">👤 <span id="activeUserBadge">Tetamu</span></div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Identiti Wajah</div>
+      <div class="metric-val" id="detectedIdentity">⏳ Mengimbas...</div>
     </div>
-
-    <div class="status-pills">
-      <div class="pill-3d">
-        <span id="aiDot" class="dot-ind"></span>
-        <span id="aiStatusText">Memuatkan Enjin...</span>
-      </div>
-      <div class="pill-3d">
-        👤 <span id="activeUserBadge">Tetamu</span>
-      </div>
-      <button id="btnChangeName" class="btn-3d" style="padding: 7px 13px; font-size: 0.76rem;">
-        Tukar Nama
-      </button>
+    <div class="metric-card">
+      <div class="metric-label">Emosi Semasa</div>
+      <div class="metric-val" id="detectedEmotion">😊 Tenang / Neutral</div>
     </div>
-  </header>
+  </div>
 
-  <!-- Kandungan Utama -->
-  <main class="main-grid">
-    <!-- Panel Kiri: Kamera, Memori Wajah & Semakan Sheet A1 -->
-    <section class="glass-3d vision-panel">
-      <div class="camera-stage">
-        <video id="webcam" autoplay muted playsinline></video>
-        <canvas id="overlay"></canvas>
+  <div id="faceScanStatus" class="scan-progress"></div>
 
-        <div id="crystalOrbView" class="crystal-orb-container">
-          <div id="orbSphere" class="orb-3d-sphere"></div>
-          <div id="orbStatusLabel" class="orb-status-label">Mod Suara Aktif • Sedia Mendengar</div>
-        </div>
-      </div>
+  <button id="btnRegisterFace" class="btn-3d primary-3d">📸 Rakam & Ingat Wajah Saya (3 Saat)</button>
 
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Identiti Wajah Dikesan</div>
-          <div class="metric-val" id="detectedIdentity">⏳ Mengimbas...</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Emosi Wajah Semasa</div>
-          <div class="metric-val" id="detectedEmotion">😊 Tenang / Neutral</div>
-        </div>
-      </div>
+  <div class="btn-row">
+    <button id="btnHideCam" class="btn-3d">🙈 Sembunyi Kamera</button>
+    <button id="btnMicOnlyMode" class="btn-3d">🎙️ Guna Mic Sahaja</button>
+  </div>
+  <div class="btn-row">
+    <button id="btnAutoHandsfree" class="btn-3d active-toggle">🔄 Dengar Automatik: ON</button>
+    <button id="btnToggleVoiceOut" class="btn-3d active-toggle">🔊 Suara AI: ON</button>
+  </div>
+  <div class="btn-row">
+    <button id="btnChangeName" class="btn-3d">✏️ Tukar Nama</button>
+    <button id="btnClearMemory" class="btn-3d">🧹 Bersih Skrin</button>
+  </div>
 
-      <div id="faceScanStatus" class="scan-progress"></div>
+  <button id="btnTestSheetKey" class="btn-3d emerald-3d">🔑 Uji API Key & Model (Sheet A1)</button>
+  <div id="sheetKeyTestBox" class="api-test-result-box" style="display: none;"></div>
+</aside>
 
-      <div class="controls-group">
-        <button id="btnRegisterFace" class="btn-3d primary-3d">
-          📸 Rakam & Ingat Setiap Pixel Wajah Saya (3 Saat)
-        </button>
+<!-- Dok Bawah: Borak + Kamera Sahaja -->
+<div class="bottom-dock">
+  <div id="chatStream" class="chat-stream"></div>
 
-        <div class="btn-row">
-          <button id="btnHideCam" class="btn-3d">
-            🙈 Sembunyi Kamera
-          </button>
-          <button id="btnMicOnlyMode" class="btn-3d">
-            🎙️ Guna Mic Sahaja
-          </button>
-        </div>
-
-        <div class="btn-row">
-          <button id="btnAutoHandsfree" class="btn-3d active-toggle">
-            🔄 Dengar Automatik: ON
-          </button>
-          <button id="btnToggleVoiceOut" class="btn-3d active-toggle">
-            🔊 Suara AI: ON
-          </button>
-        </div>
-
-        <!-- Butang Uji Terus Kunci di dalam Google Sheet A1 Tanpa Sebarang Input Manual -->
-        <button id="btnTestSheetKey" class="btn-3d emerald-3d">
-          🔑 Uji Status API Key Dalam Google Sheet (A1)
-        </button>
-        <div id="sheetKeyTestBox" class="api-test-result-box" style="display: none;"></div>
-      </div>
-    </section>
-
-    <!-- Panel Kanan: Borak Kawan Baik -->
-    <section class="glass-3d chat-panel">
-      <div class="chat-header">
-        <div class="chat-header-info">
-          <h2>Ruang Borak Sahabat AI</h2>
-          <p id="subModeIndicator">Bercakap terus melalui mikrofon atau taip di bawah</p>
-        </div>
-        <button id="btnClearMemory" class="btn-3d" style="padding: 7px 12px; font-size: 0.75rem;">
-          🧹 Bersih Skrin
-        </button>
-      </div>
-
-      <div id="chatStream" class="chat-stream"></div>
-
-      <div class="chat-input-bar">
-        <button id="btnMicTalk" class="mic-fab" title="Tekan untuk bercakap">
-          🎤
-        </button>
-        <input type="text" id="textMessageInput" class="chat-text-input" placeholder="Bercakap guna mic atau taip apa sahaja di sini..." autocomplete="off">
-        <button id="btnSendText" class="send-btn">Hantar</button>
-      </div>
-    </section>
-  </main>
+  <div class="chat-input-bar">
+    <div id="cameraStage" class="camera-stage" title="Tekan untuk besarkan / kecilkan kamera">
+      <video id="webcam" autoplay muted playsinline></video>
+      <canvas id="overlay"></canvas>
+      <div id="crystalOrbView" class="crystal-orb-container"><span id="orbSphere">🎙️</span></div>
+    </div>
+    <button id="btnMicTalk" class="mic-fab" title="Tekan untuk bercakap">🎤</button>
+    <input type="text" id="textMessageInput" class="chat-text-input" placeholder="Cakap atau taip di sini..." autocomplete="off">
+    <button id="btnSendText" class="send-btn">Hantar</button>
+  </div>
 </div>
 
 <script>
@@ -838,6 +260,14 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
   let currentIdentity = "Belum Dikenali";
   let currentEmotion = "Tenang / Neutral";
 
+  // Keadaan dikongsi dengan enjin zarah AURA (supaya zarah "hidup & faham")
+  window.AURA = {
+    listening: false, speaking: false, thinking: false,
+    emotion: "neutral", face: { x: 0, y: 0, seen: false },
+    wordKick: 0, nodAt: 0, absorbAt: 0, pokeAt: 0
+  };
+  const AURA = window.AURA;
+
   const EMOTION_MAP = {
     neutral: "😊 Tenang / Neutral",
     happy: "😄 Gembira / Ceria",
@@ -857,6 +287,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
   const aiStatusText = document.getElementById("aiStatusText");
 
   const videoEl = document.getElementById("webcam");
+  const cameraStage = document.getElementById("cameraStage");
+  const miniDot = document.getElementById("miniDot");
   const canvasEl = document.getElementById("overlay");
   const crystalOrbView = document.getElementById("crystalOrbView");
   const orbSphere = document.getElementById("orbSphere");
@@ -959,7 +391,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
 
       if (data.alive) {
         sheetKeyTestBox.className = "api-test-result-box alive";
-        sheetKeyTestBox.innerHTML = `✅ <b>API KEY SHEET A1 HIDUP!</b><br>• Kunci Dikesan: <code>${data.maskedKey}</code> (${data.keyLength} aksara)<br>• Kelajuan Groq: <b>${data.latencyMs} ms</b>`;
+        sheetKeyTestBox.innerHTML = `✅ <b>API KEY SHEET A1 HIDUP!</b><br>• Kunci Dikesan: <code>${data.maskedKey}</code> (${data.keyLength} aksara)<br>• Kelajuan Groq: <b>${data.latencyMs} ms</b><br>• Model Digunakan: <b>${data.model || "-"}</b>`;
         aiDot.className = "dot-ind online";
         aiStatusText.textContent = `Sheet A1 Aktif (${data.latencyMs}ms)`;
       } else {
@@ -1074,6 +506,9 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
       webcamStream = null;
     }
     videoEl.srcObject = null;
+    AURA.face.seen = false;
+    AURA.emotion = "neutral";
+    cameraStage.classList.remove("face-on");
     const ctx = canvasEl.getContext("2d");
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
   }
@@ -1108,6 +543,11 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
         }
         currentEmotion = EMOTION_MAP[topEmotionKey] || "😊 Tenang / Neutral";
         detectedEmotionEl.textContent = currentEmotion;
+        AURA.emotion = topEmotionKey;
+        const bx = detection.detection.box;
+        const vw = videoEl.videoWidth || 640, vh = videoEl.videoHeight || 480;
+        AURA.face = { x: -(((bx.x + bx.width / 2) / vw) * 2 - 1), y: ((bx.y + bx.height / 2) / vh) * 2 - 1, seen: true };
+        cameraStage.classList.add("face-on");
 
         if (faceMatcher) {
           const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
@@ -1134,6 +574,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
         }
       } else {
         detectedEmotionEl.textContent = "👀 Mencari Wajah...";
+        AURA.face.seen = false;
+        cameraStage.classList.remove("face-on");
       }
     }, 900);
   }
@@ -1276,6 +718,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
 
     recognition.onstart = () => {
       isListening = true;
+      AURA.listening = true;
       btnMicTalk.classList.add("listening");
       orbSphere.classList.add("listening");
       orbStatusLabel.textContent = "🎙️ Sedang mendengar suara anda...";
@@ -1284,6 +727,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
     recognition.onresult = (event) => {
       const transkrip = event.results[0][0].transcript.trim();
       if (transkrip) {
+        AURA.absorbAt = performance.now();
         textMessageInput.value = transkrip;
         hantarMesejPengguna(transkrip);
       }
@@ -1291,12 +735,14 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
 
     recognition.onerror = () => {
       isListening = false;
+      AURA.listening = false;
       btnMicTalk.classList.remove("listening");
       orbSphere.classList.remove("listening");
     };
 
     recognition.onend = () => {
       isListening = false;
+      AURA.listening = false;
       btnMicTalk.classList.remove("listening");
       orbSphere.classList.remove("listening");
       if (isHandsfree && !isAiSpeaking) {
@@ -1358,6 +804,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
 
     utterance.onstart = () => {
       isAiSpeaking = true;
+      AURA.speaking = true;
+      AURA.wordKick = 1;
       if (recognition && isListening) {
         try { recognition.stop(); } catch (e) {}
       }
@@ -1368,6 +816,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
 
     utterance.onend = () => {
       isAiSpeaking = false;
+      AURA.speaking = false;
       orbSphere.classList.remove("speaking");
       orbStatusLabel.textContent = "Mod Suara Aktif • Sedia Mendengar";
       if (isHandsfree && recognition) {
@@ -1379,9 +828,12 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
 
     utterance.onerror = () => {
       isAiSpeaking = false;
+      AURA.speaking = false;
       orbSphere.classList.remove("speaking");
     };
 
+    // Setiap perkataan yang disebut membuat zarah berdenyut
+    utterance.onboundary = () => { AURA.wordKick = 1; };
     window.speechSynthesis.speak(utterance);
   }
 
@@ -1415,6 +867,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
       ? "Dimatikan (Berbual Guna Mikrofon Sahaja)"
       : (isCameraHidden ? "Kamera Disembunyikan" : "Kamera Aktif");
 
+    AURA.thinking = true;
     try {
       const res = await fetch(GAS_URL, {
         method: "POST",
@@ -1436,6 +889,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
       }
 
       const balasan = data.reply;
+      AURA.thinking = false;
+      AURA.nodAt = performance.now();
 
       chatHistory.push({ role: "user", content: mesej });
       chatHistory.push({ role: "assistant", content: balasan });
@@ -1446,8 +901,9 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
       tambahMesejKeSkrin("ai", balasan, labelEmosiSemasa);
       cakapSuaraAI(balasan);
     } catch (err) {
+      AURA.thinking = false;
       aiDot.className = "dot-ind error";
-      tambahMesejKeSkrin("ai", `⚠️ Ralat Sheet A1: ${err.message}`);
+      tambahMesejKeSkrin("ai", `⚠️ Ralat: ${err.message}`);
     }
   }
 
@@ -1471,6 +927,25 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
     chatStream.scrollTop = chatStream.scrollHeight;
   }
 
+  /********************************************************************
+   * 9. LACI TETAPAN (butang lain disembunyikan) & KAMERA KECIL
+   ********************************************************************/
+  const settingsDrawer = document.getElementById("settingsDrawer");
+  const drawerBackdrop = document.getElementById("drawerBackdrop");
+  function bukaLaci(buka) {
+    settingsDrawer.classList.toggle("open", buka);
+    drawerBackdrop.classList.toggle("open", buka);
+  }
+  document.getElementById("btnOpenSettings").addEventListener("click", () => bukaLaci(true));
+  document.getElementById("btnCloseSettings").addEventListener("click", () => bukaLaci(false));
+  drawerBackdrop.addEventListener("click", () => bukaLaci(false));
+  btnChangeName.addEventListener("click", () => bukaLaci(false));
+  cameraStage.addEventListener("click", () => cameraStage.classList.toggle("expanded"));
+
+  // Salin status sambungan ke titik kecil pada butang tetapan
+  new MutationObserver(() => { miniDot.className = "status-dot-mini " + aiDot.className.replace("dot-ind", "").trim(); })
+    .observe(aiDot, { attributes: true, attributeFilter: ["class"] });
+
   function paparSejarahBorak() {
     chatStream.innerHTML = "";
     chatHistory.forEach(item => {
@@ -1478,62 +953,226 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzG1OKrE4y_j8KsI6tHXFLr
     });
   }
 </script>
-<canvas id="auraParticles"></canvas>
+
 <script>
-/* ===== AURA NEBULA: KAWAN AI ZARAH 3D (bertindak balas pada suara) ===== */
+/* =====================================================================
+ * AURA NEBULA — ZARAH HIDUP SKRIN PENUH
+ * Zarah bernafas, memandang wajah anda, mendengar suara anda,
+ * berpusar ketika berfikir, mengangguk bila faham, dan berdenyut
+ * mengikut setiap perkataan ketika bercakap. Warna ikut emosi wajah.
+ * ===================================================================== */
 (function(){
-  const cv=document.getElementById("auraParticles"),ctx=cv.getContext("2d");
-  let W,H,DPR=Math.min(window.devicePixelRatio||1,2);
-  function resize(){W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
-  resize();addEventListener("resize",resize);
-  const mobile=W<700, N=mobile?900:1700, STARS=mobile?90:180;
-  const P=[];const g=Math.PI*(3-Math.sqrt(5));
-  for(let i=0;i<N;i++){const y=1-(i/(N-1))*2,r=Math.sqrt(1-y*y),t=g*i;
-    P.push({x:Math.cos(t)*r,y:y,z:Math.sin(t)*r,s:Math.random(),f:Math.random()*6.28,d:0.6+Math.random()*0.4});}
-  const S=[];for(let i=0;i<STARS;i++)S.push({x:Math.random(),y:Math.random(),a:Math.random(),v:0.0002+Math.random()*0.0006});
-  // Mikrofon: analisis kelantangan bila mendengar
-  let analyser=null,buf=null,micLvl=0;
-  async function bukaMic(){ if(analyser) return;
-    try{const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
-      const ac=new (window.AudioContext||window.webkitAudioContext)();const src=ac.createMediaStreamSource(st);
-      analyser=ac.createAnalyser();analyser.fftSize=512;buf=new Uint8Array(analyser.fftSize);src.connect(analyser);}catch(e){}
+  const A = window.AURA;
+  const cv = document.getElementById("auraParticles"), ctx = cv.getContext("2d");
+  const label = document.getElementById("orbStatusLabel");
+  let W, H, DPR = Math.min(window.devicePixelRatio || 1, 2), mobile = innerWidth < 700;
+
+  function layout(){
+    W = innerWidth; H = innerHeight; mobile = W < 700;
+    cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
-  document.addEventListener("pointerdown",()=>{bukaMic();},{once:true});
-  const st=(n)=>{try{return eval(n);}catch(e){return false;}};
-  let rot=0,energy=0,scaleK=1,time=0,last=performance.now();
+  layout(); addEventListener("resize", layout);
+
+  // --- Zarah sfera (taburan Fibonacci) ---
+  const N = mobile ? 1100 : 1900;
+  const P = [], g = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++) {
+    const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), t = g * i;
+    P.push({ x: Math.cos(t) * r, y, z: Math.sin(t) * r, s: Math.random(), f: Math.random() * 6.283, d: 0.55 + Math.random() * 0.45, ox: 0, oy: 0 });
+  }
+  // --- Gelang orbit (muncul ketika berfikir / bercakap) ---
+  const RING = mobile ? 140 : 220, Rg = [];
+  for (let i = 0; i < RING; i++) Rg.push({ a: Math.random() * 6.283, r: 1.28 + Math.random() * 0.32, s: 0.4 + Math.random(), f: Math.random() * 6.283 });
+  // --- Bintang latar ---
+  const STARS = mobile ? 110 : 220, S = [];
+  for (let i = 0; i < STARS; i++) S.push({ x: Math.random(), y: Math.random(), a: Math.random(), v: 0.00015 + Math.random() * 0.0005 });
+
+  // --- Palet warna ikut emosi wajah (hue, saturation) ---
+  const PAL = {
+    neutral:   [190, 90], happy: [42, 95], sad: [222, 70], angry: [352, 80],
+    fearful:   [265, 70], disgusted: [140, 65], surprised: [305, 90]
+  };
+
+  // --- Mikrofon: dengar kelantangan suara anda ---
+  let analyser = null, buf = null, micLvl = 0;
+  async function bukaMic(){
+    if (analyser) return;
+    try {
+      const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ac.createMediaStreamSource(st);
+      analyser = ac.createAnalyser(); analyser.fftSize = 512; buf = new Uint8Array(analyser.fftSize); src.connect(analyser);
+    } catch (e) {}
+  }
+  document.addEventListener("pointerdown", bukaMic, { once: true });
+
+  // --- Sentuhan / tetikus: zarah mengelak jari anda ---
+  const ptr = { x: -9999, y: -9999, on: false, t: 0 };
+  addEventListener("pointermove", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.t = performance.now(); });
+  addEventListener("pointerdown", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.t = performance.now(); A.pokeAt = performance.now(); });
+  addEventListener("pointerleave", () => { ptr.on = false; });
+
+  let rot = 0, swirl = 0, energy = 0, time = 0, last = performance.now();
+  let wL = 0, wT = 0, wS = 0, wordE = 0;
+  let hue = 190, sat = 90, gx = 0, gy = 0;
+  let lastLabel = "";
+
+  const lerp = (a, b, k) => a + (b - a) * k;
+
   function frame(now){
-    const dt=Math.min((now-last)/16.67,3);last=now;time+=0.016*dt;
-    const listening=st("isListening"),speaking=st("isAiSpeaking");
-    if(analyser&&listening){analyser.getByteTimeDomainData(buf);let s=0;for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;s+=v*v;}micLvl=Math.min(1,Math.sqrt(s/buf.length)*6);}else micLvl*=0.9;
-    const speakLvl=speaking?(0.35+0.35*Math.abs(Math.sin(time*9))*Math.abs(Math.sin(time*3.7+1))):0;
-    const target=Math.max(micLvl,speakLvl);
-    energy+=(target-energy)*0.15*dt;
-    rot+=(0.0025+energy*0.02)*dt;
-    ctx.fillStyle="rgba(1,4,9,0.35)";ctx.fillRect(0,0,W,H);
-    // bintang
-    for(const s of S){s.y-=s.v*dt;if(s.y<0)s.y=1;ctx.fillStyle=`rgba(120,220,255,${0.15+0.25*Math.abs(Math.sin(time+s.a*6))})`;ctx.fillRect(s.x*W,s.y*H,1.2,1.2);}
-    const cx=W/2,cy=H*(mobile?0.32:0.42),R=Math.min(W,H)*(mobile?0.3:0.27)*(1+energy*0.18+Math.sin(time*1.3)*0.015);
-    // cahaya teras
-    const gr=ctx.createRadialGradient(cx,cy,0,cx,cy,R*1.25);
-    const hue=speaking?185:(listening?200:190);
-    gr.addColorStop(0,`hsla(${hue},90%,55%,${0.18+energy*0.25})`);gr.addColorStop(1,"hsla(200,90%,40%,0)");
-    ctx.fillStyle=gr;ctx.beginPath();ctx.arc(cx,cy,R*1.25,0,6.29);ctx.fill();
-    const cr=Math.cos(rot),sr=Math.sin(rot),ct=Math.cos(0.35),stt=Math.sin(0.35);
-    ctx.globalCompositeOperation="lighter";
-    for(const p of P){
-      const wob=1+Math.sin(time*2+p.f)*0.03+energy*Math.sin(time*12+p.f*3)*0.18*p.s;
-      let x=p.x*wob,y=p.y*wob,z=p.z*wob;
-      let x1=x*cr-z*sr,z1=x*sr+z*cr;let y1=y*ct-z1*stt,z2=y*stt+z1*ct;
-      const k=1/(1.9-z2*0.6),px=cx+x1*R*k*1.2,py=cy+y1*R*k*1.2;
-      const depth=(z2+1)/2,a=(0.15+depth*0.85)*p.d;
-      const size=(0.6+depth*1.8)*(1+energy*0.6);
-      const tw=0.6+0.4*Math.sin(time*3+p.f);
-      ctx.fillStyle=depth>0.8?`rgba(235,252,255,${a*tw})`:`hsla(${hue+p.s*25},90%,${60+depth*25}%,${a*tw})`;
-      // ekor kecil (kesan zarah terbang)
-      const tx=(x1*sr)*3*(1+energy*3);
-      ctx.fillRect(px-tx,py,size+Math.abs(tx),size*0.8);
+    const dt = Math.min((now - last) / 16.67, 3); last = now; time += 0.016 * dt;
+    const listening = !!A.listening, speaking = !!A.speaking, thinking = !!A.thinking;
+
+    // Tahap suara pengguna
+    if (analyser && listening) {
+      analyser.getByteTimeDomainData(buf); let s = 0;
+      for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; s += v * v; }
+      micLvl = lerp(micLvl, Math.min(1, Math.sqrt(s / buf.length) * 7), 0.35);
+    } else micLvl *= 0.9;
+
+    // Setiap perkataan AI = denyutan
+    if (A.wordKick) { wordE = 1; A.wordKick = 0; }
+    wordE *= Math.pow(0.9, dt);
+    const speakLvl = speaking ? 0.22 + 0.55 * wordE + 0.12 * Math.abs(Math.sin(time * 7.3)) : 0;
+    const listenLvl = listening ? 0.12 + micLvl : 0;
+
+    energy = lerp(energy, Math.max(listenLvl, speakLvl, thinking ? 0.25 : 0), 0.14 * dt);
+    wL = lerp(wL, listening ? 1 : 0, 0.07 * dt);
+    wT = lerp(wT, thinking ? 1 : 0, 0.05 * dt);
+    wS = lerp(wS, speaking ? 1 : 0, 0.08 * dt);
+
+    // Warna ikut emosi (peralihan lembut)
+    const pal = PAL[A.emotion] || PAL.neutral;
+    let dh = ((pal[0] - hue + 540) % 360) - 180; hue = (hue + dh * 0.02 * dt + 360) % 360;
+    sat = lerp(sat, pal[1], 0.02 * dt);
+    const hueNow = hue + wT * 20 * Math.sin(time * 0.8);
+
+    // Pandangan: ikut wajah anda, jari anda, atau merayau sendiri
+    let tgx, tgy;
+    const ptrFresh = ptr.on && now - ptr.t < 2500;
+    if (ptrFresh) { tgx = (ptr.x / W) * 2 - 1; tgy = (ptr.y / H) * 2 - 1; }
+    else if (A.face && A.face.seen) { tgx = A.face.x; tgy = A.face.y; }
+    else { tgx = Math.sin(time * 0.23) * 0.45 + Math.sin(time * 0.61) * 0.15; tgy = Math.sin(time * 0.31 + 1) * 0.25; }
+    gx = lerp(gx, Math.max(-1, Math.min(1, tgx)), 0.04 * dt);
+    gy = lerp(gy, Math.max(-1, Math.min(1, tgy)), 0.04 * dt);
+
+    // Angguk bila faham, "serap" bila dengar ayat habis, terkejut bila disentuh
+    const tn = A.nodAt ? (now - A.nodAt) / 1000 : 9;
+    const nod = tn < 1.6 ? Math.sin(tn * 11) * Math.exp(-tn * 2.6) * 0.32 : 0;
+    const ta = A.absorbAt ? (now - A.absorbAt) / 1000 : 9;
+    const absorb = ta < 1.2 ? Math.sin(Math.min(ta, 0.6) / 0.6 * Math.PI) * Math.exp(-ta * 1.5) : 0;
+    const tp = A.pokeAt ? (now - A.pokeAt) / 1000 : 9;
+    const poke = tp < 1 ? Math.exp(-tp * 4) : 0;
+
+    // Latar & jejak
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(1,4,9,0.32)"; ctx.fillRect(0, 0, W, H);
+    for (const s of S) {
+      s.y -= s.v * dt * (1 + energy * 3); if (s.y < 0) s.y = 1;
+      ctx.fillStyle = `rgba(140,220,255,${0.12 + 0.25 * Math.abs(Math.sin(time + s.a * 6))})`;
+      ctx.fillRect(s.x * W, s.y * H, 1.2, 1.2);
     }
-    ctx.globalCompositeOperation="source-over";
+
+    // Kedudukan & saiz aura (atas skrin, tidak ditutup dok borak)
+    const breath = Math.sin(time * 1.2) * 0.02;
+    const baseR = mobile ? Math.min(W * 0.36, H * 0.21) : Math.min(W * 0.3, H * 0.22);
+    const R = baseR * (1 + breath + energy * 0.16 - absorb * 0.14 + poke * 0.08);
+    const cx = W / 2 + gx * W * 0.035;
+    const cy = H * (mobile ? 0.3 : 0.32) + gy * H * 0.025 + Math.sin(time * 0.7) * 4;
+    const labelTop = cy + baseR * 1.25 + 18;
+    document.documentElement.style.setProperty("--label-top", labelTop + "px");
+
+    // Cahaya teras + "mata" yang memandang anda
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.5);
+    gr.addColorStop(0, `hsla(${hueNow},${sat}%,55%,${0.16 + energy * 0.25})`);
+    gr.addColorStop(1, `hsla(${hueNow},${sat}%,40%,0)`);
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, R * 1.5, 0, 6.29); ctx.fill();
+
+    const ex = cx + gx * R * 0.32, ey = cy + gy * R * 0.26 + nod * R * 0.5;
+    const eye = ctx.createRadialGradient(ex, ey, 0, ex, ey, R * 0.55);
+    eye.addColorStop(0, `hsla(${hueNow + 10},100%,85%,${0.22 + energy * 0.35 + wL * 0.12})`);
+    eye.addColorStop(1, `hsla(${hueNow},100%,60%,0)`);
+    ctx.fillStyle = eye; ctx.beginPath(); ctx.arc(ex, ey, R * 0.55, 0, 6.29); ctx.fill();
+
+    // Putaran: lebih laju bila berfikir; condong ke arah anda
+    rot += (0.0022 + energy * 0.012) * dt;
+    swirl += 0.045 * wT * dt;
+    const yaw = rot + gx * 0.55;
+    const tilt = 0.3 + gy * 0.45 + nod;
+    const cr = Math.cos(yaw), sr = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
+
+    ctx.globalCompositeOperation = "lighter";
+    const repelR = mobile ? 90 : 130;
+    for (const p of P) {
+      // Pernafasan organik
+      const n = Math.sin(p.x * 3.1 + time * 0.9) + Math.sin(p.y * 2.7 - time * 0.7) + Math.sin(p.z * 3.3 + time * 1.1);
+      let disp = 1 + n * 0.028;
+      // Mendengar: riak mengikut suara anda
+      disp += wL * (0.02 + micLvl * 0.28) * Math.sin(p.y * 9 - time * 13 + p.s);
+      // Bercakap: gelombang keluar dari muka hadapan
+      disp += wS * speakLvl * 0.16 * Math.sin(time * 15 - (p.z + 1) * 4.5 + p.s * 0.6);
+      // Kilauan rawak
+      disp += energy * Math.sin(time * 12 + p.f * 3) * 0.06 * p.s;
+      disp *= 1 - absorb * 0.12;
+
+      let x = p.x * disp, y = p.y * disp * (1 - wT * 0.38), z = p.z * disp;
+      // Berfikir: lapisan berpusar pada kelajuan berbeza (seperti galaksi)
+      if (wT > 0.01) {
+        const a = swirl * (1 + (1 - Math.abs(p.y)) * 2.2);
+        const ca = Math.cos(a), sa = Math.sin(a), nx = x * ca - z * sa; z = x * sa + z * ca; x = nx;
+      }
+      // Putaran global + condong
+      const x1 = x * cr - z * sr, z1 = x * sr + z * cr;
+      const y1 = y * ct - z1 * st, z2 = y * st + z1 * ct;
+      const k = 1 / (1.9 - z2 * 0.6);
+      let px = cx + x1 * R * k * 1.2, py = cy + y1 * R * k * 1.2;
+
+      // Mengelak jari / tetikus
+      if (ptrFresh) {
+        const dx = px - ptr.x, dy = py - ptr.y, d2 = dx * dx + dy * dy;
+        if (d2 < repelR * repelR) {
+          const d = Math.sqrt(d2) || 1, push = (1 - d / repelR) * 26;
+          p.ox = lerp(p.ox, dx / d * push, 0.25); p.oy = lerp(p.oy, dy / d * push, 0.25);
+        } else { p.ox *= 0.92; p.oy *= 0.92; }
+      } else { p.ox *= 0.92; p.oy *= 0.92; }
+      px += p.ox; py += p.oy;
+
+      const depth = (z2 + 1) / 2, alpha = (0.12 + depth * 0.88) * p.d;
+      const size = (0.6 + depth * 1.8) * (1 + energy * 0.55);
+      const tw = 0.6 + 0.4 * Math.sin(time * 3 + p.f);
+      ctx.fillStyle = depth > 0.82
+        ? `hsla(${hueNow + 10},100%,94%,${alpha * tw})`
+        : `hsla(${hueNow + p.s * 28},${sat}%,${58 + depth * 26}%,${alpha * tw})`;
+      const tail = x1 * sr * 2.4 * (1 + energy * 1.6);
+      ctx.fillRect(px - tail, py, size + Math.abs(tail), size * 0.8);
+    }
+
+    // Gelang orbit
+    const ringW = Math.max(wT, wS * 0.6, wL * 0.35);
+    if (ringW > 0.02) {
+      const rt = 1.15, crt = Math.cos(rt + gy * 0.3), srt = Math.sin(rt + gy * 0.3);
+      for (const q of Rg) {
+        q.a += (0.008 + wT * 0.03) * q.s * dt;
+        const rr = q.r * (1 + wS * speakLvl * 0.12 * Math.sin(time * 9 + q.f));
+        const x = Math.cos(q.a) * rr, z = Math.sin(q.a) * rr;
+        const y1 = -z * srt, z2 = z * crt;
+        const k = 1 / (1.9 - z2 * 0.6);
+        const px = cx + x * R * k * 1.2, py = cy + y1 * R * k * 1.2 * 0.6;
+        const a = ringW * (0.25 + (z2 + 1) * 0.35) * (0.6 + 0.4 * Math.sin(time * 4 + q.f));
+        ctx.fillStyle = `hsla(${hueNow + 20},100%,80%,${a})`;
+        ctx.fillRect(px, py, 1.6, 1.6);
+      }
+    }
+    ctx.globalCompositeOperation = "source-over";
+
+    // Label status lembut
+    const want = A.listening ? "🎙️ Saya sedang dengar..." : A.thinking ? "💭 Saya faham, sedang berfikir..." : A.speaking ? "" : "Sedia mendengar";
+    if (want !== lastLabel && label) {
+      lastLabel = want;
+      if (want) label.textContent = want;
+      label.style.opacity = want ? "1" : "0";
+    }
+
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

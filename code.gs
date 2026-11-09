@@ -44,6 +44,114 @@ function ambilApiKeyGroq() {
   return apiKey;
 }
 
+/* =====================================================================
+ * PEMILIHAN MODEL GROQ AUTOMATIK
+ * Groq kerap menukar / menamatkan model. Kod ini membaca senarai model
+ * yang BENAR-BENAR tersedia untuk kunci anda, dan memilih yang terbaik.
+ * Mahu paksa model tertentu? Tulis nama model dalam tab 'apikey' sel B1.
+ * ===================================================================== */
+const MODEL_PILIHAN = [
+  "openai/gpt-oss-120b",
+  "llama-3.3-70b-versatile",
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "moonshotai/kimi-k2-instruct-0905",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3-32b",
+  "llama-3.1-8b-instant"
+];
+
+function senaraiModelGroq(apiKey, segarkan) {
+  const cache = CacheService.getScriptCache();
+  if (!segarkan) {
+    const c = cache.get("groq_models_v2");
+    if (c) { try { return JSON.parse(c); } catch (e) {} }
+  }
+  const r = UrlFetchApp.fetch("https://api.groq.com/openai/v1/models", {
+    method: "get", headers: { "Authorization": "Bearer " + apiKey }, muteHttpExceptions: true
+  });
+  if (r.getResponseCode() !== 200) return [];
+  let ids = [];
+  try {
+    ids = (JSON.parse(r.getContentText()).data || [])
+      .filter(m => m && m.id && m.active !== false)
+      .map(m => String(m.id))
+      .filter(id => !/whisper|guard|tts|playai|orpheus|prompt-guard|safeguard|distil/i.test(id));
+  } catch (e) {}
+  if (ids.length) cache.put("groq_models_v2", JSON.stringify(ids), 21600);
+  return ids;
+}
+
+function modelManualDariSheet() {
+  try {
+    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName("apikey");
+    if (!sheet) return "";
+    return String(sheet.getRange("B1").getValue() || "").trim();
+  } catch (e) { return ""; }
+}
+
+// Pulangkan senarai model untuk dicuba mengikut keutamaan
+function susunCalonModel(apiKey, segarkan) {
+  const ada = senaraiModelGroq(apiKey, segarkan);
+  const manual = modelManualDariSheet();
+  const calon = [];
+  if (manual && (!ada.length || ada.indexOf(manual) >= 0)) calon.push(manual);
+  MODEL_PILIHAN.forEach(m => { if ((!ada.length || ada.indexOf(m) >= 0) && calon.indexOf(m) < 0) calon.push(m); });
+  ada.forEach(m => { if (calon.indexOf(m) < 0 && !/compound/i.test(m)) calon.push(m); });
+  return calon;
+}
+
+function bersihkanJawapan(t) {
+  return String(t || "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/[*#`]/g, "")
+    .trim();
+}
+
+function panggilGroqChat(apiKey, messagesPayload) {
+  let calon = susunCalonModel(apiKey, false);
+  let ralatAkhir = "Tiada model chat tersedia untuk kunci API ini.";
+  let dahSegar = false;
+
+  for (let i = 0; i < calon.length && i < 5; i++) {
+    const model = calon[i];
+    const body = { model: model, messages: messagesPayload, temperature: 0.72, max_tokens: 700 };
+    if (/^openai\/gpt-oss/i.test(model)) body.reasoning_effort = "low";
+    if (/qwen3/i.test(model)) body.reasoning_format = "hidden";
+
+    const res = UrlFetchApp.fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "post",
+      contentType: "application/json",
+      headers: { "Authorization": "Bearer " + apiKey },
+      payload: JSON.stringify(body),
+      muteHttpExceptions: true
+    });
+    let json = {};
+    try { json = JSON.parse(res.getContentText()); } catch (e) { json = { error: { message: "HTTP " + res.getResponseCode() } }; }
+
+    if (!json.error && json.choices && json.choices[0]) {
+      const teks = bersihkanJawapan(json.choices[0].message && json.choices[0].message.content);
+      if (teks) return { reply: teks, model: model };
+      ralatAkhir = "Model " + model + " memulangkan jawapan kosong.";
+      continue;
+    }
+
+    ralatAkhir = (json.error && json.error.message) || ("HTTP " + res.getResponseCode());
+    // Ralat berkaitan model -> cuba model seterusnya (segarkan senarai sekali)
+    if (/model|decommission|not exist|not found|access|deprecat/i.test(ralatAkhir)) {
+      if (!dahSegar) {
+        dahSegar = true;
+        const baru = susunCalonModel(apiKey, true).filter(m => m !== model);
+        calon = calon.slice(0, i + 1).concat(baru.filter(m => calon.slice(0, i + 1).indexOf(m) < 0));
+      }
+      continue;
+    }
+    // Ralat lain (had kadar, kunci salah) -> berhenti
+    break;
+  }
+  throw new Error(ralatAkhir);
+}
+
 function doGet(e) {
   return prosesPermintaan(e);
 }
@@ -84,6 +192,7 @@ function prosesPermintaan(e) {
         maskedKey: topengKunci(apiKey),
         keyLength: apiKey.length,
         latencyMs: Date.now() - t0,
+        model: code === 200 ? (susunCalonModel(apiKey, true)[0] || "Tiada") : "",
         message: msg
       });
     }
@@ -196,30 +305,13 @@ Peraturan Penting:
         { role: "user", content: mesej }
       ];
 
-      const urlGroq = "https://api.groq.com/openai/v1/chat/completions";
-      const options = {
-        method: "post",
-        contentType: "application/json",
-        headers: {
-          "Authorization": "Bearer " + apiKey
-        },
-        payload: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: messagesPayload,
-          temperature: 0.72,
-          max_tokens: 350
-        }),
-        muteHttpExceptions: true
-      };
-
-      const res = UrlFetchApp.fetch(urlGroq, options);
-      const json = JSON.parse(res.getContentText());
-
-      if (json.error) {
-        return responJSON({ status: "error", message: json.error.message });
+      let hasil;
+      try {
+        hasil = panggilGroqChat(apiKey, messagesPayload);
+      } catch (gErr) {
+        return responJSON({ status: "error", message: gErr.message });
       }
-
-      const jawapanAI = json.choices[0].message.content.trim();
+      const jawapanAI = hasil.reply;
 
       // Rekod ke dalam helaian LogMemori
       try {
@@ -232,7 +324,8 @@ Peraturan Penting:
 
       return responJSON({
         status: "success",
-        reply: jawapanAI
+        reply: jawapanAI,
+        model: hasil.model
       });
     }
 
