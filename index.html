@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTXkSOs2bFK2VZ89KIMxTZaTQbmTAyOEZd-1zqu7vivAKrZ/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -302,6 +302,19 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     <button id="btnClearMemory" class="btn-3d">🧹 Bersih Skrin</button>
   </div>
 
+  <button id="btnGhost" class="btn-3d">👻 Mod Ghost: OFF</button>
+  <div id="ghostPanel" class="metric-card" style="display:none;font-size:.74rem;line-height:1.55">
+    <div class="metric-label">👻 Pengesan Persekitaran</div>
+    <div>Frekuensi rendah (&lt;120Hz): <b id="gLow">0</b></div>
+    <div>Getaran / gerakan peranti: <b id="gMot">0</b></div>
+    <div>Perubahan cahaya kamera: <b id="gLight">0</b></div>
+    <div>Medan / orientasi: <b id="gOri">0</b></div>
+    <div style="margin-top:6px">Tahap kehadiran: <b id="gLvl">0%</b></div>
+    <div style="height:8px;border-radius:6px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden"><div id="gBar" style="height:100%;width:0;background:linear-gradient(90deg,#22d3ee,#f43f5e)"></div></div>
+    <div id="gLog" style="margin-top:8px;max-height:110px;overflow:auto;color:var(--muted)"></div>
+    <label style="display:block;margin-top:8px">Kepekaan: <input id="gSens" type="range" min="1" max="10" value="7" style="width:100%"></label>
+    <div style="margin-top:6px;color:var(--muted);font-size:.68rem">Hiburan sahaja: membaca bunyi, getaran, cahaya &amp; sensor peranti.</div>
+  </div>
   <button id="btnWhisper" class="btn-3d active-toggle">🎯 Dengar Tepat (setaraf Siri): ON</button>
   <div class="metric-card" style="font-size:.72rem;line-height:1.5;color:var(--muted)">
     Suara anda dirakam dan ditukar kepada teks oleh enjin Whisper (sangat tepat untuk Bahasa Melayu). Matikan jika internet perlahan.
@@ -1842,7 +1855,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     const speakLvl = speaking ? 0.22 + 0.55 * wordE + 0.12 * Math.abs(Math.sin(time * 7.3)) : 0;
     const listenLvl = listening ? 0.12 + micLvl : 0;
 
-    energy = lerp(energy, Math.max(listenLvl, speakLvl, thinking ? 0.25 : 0), 0.14 * dt);
+    energy = lerp(energy, Math.max(A.ghost && A.ghost.on ? A.ghost.level * 0.9 : 0, listenLvl, speakLvl, thinking ? 0.25 : 0), 0.14 * dt);
     wL = lerp(wL, listening ? 1 : 0, 0.07 * dt);
     wT = lerp(wT, thinking ? 1 : 0, 0.05 * dt);
     wS = lerp(wS, speaking ? 1 : 0, 0.08 * dt);
@@ -1851,6 +1864,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     const gembira = now < gembiraHingga;
     let pal = PAL[gembira && CFG.mode === "auto" ? "happy" : A.emotion] || PAL.neutral;
     if (CFG.mode === "custom") pal = hexKeHsl(CFG.color);
+    const hantu = A.ghost && A.ghost.on ? A.ghost.level : 0;
+    if (hantu > 0.45) pal = [358, 100];
     else if (CFG.mode === "rainbow") pal = [(time * 25) % 360, 95];
     let dh = ((pal[0] - hue + 540) % 360) - 180; hue = (hue + dh * 0.02 * dt + 360) % 360;
     sat = lerp(sat, pal[1], 0.02 * dt);
@@ -2084,5 +2099,92 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
 })();
 </script>
 
+<script>
+/* ===================== MOD GHOST (kata laluan 101010) ===================== */
+(function(){
+  const A = window.AURA; A.ghost = { on: false, level: 0 };
+  const $ = id => document.getElementById(id);
+  const btn = $("btnGhost"), panel = $("ghostPanel");
+  if (!btn) return;
+  let stream = null, ac = null, an = null, fbuf = null, tbuf = null, timer = null, osc = null, oscG = null;
+  let mot = 0, ori = 0, lastOri = null, light = 0, lastLight = null, low = 0, lowBase = 0, lastSpeak = 0;
+  const vid = document.createElement("video"), cvs = document.createElement("canvas"); vid.muted = true; vid.playsInline = true; cvs.width = 32; cvs.height = 24;
+  const KATA = ["saya di sini","dengar","dekat","sejuk","siapa","tolong","pergi","rumah","gelap","nama","jangan","ya","tidak","belakang","tunggu","lama","sini","bawah","pintu","malam","kawan","nampak","ikut","lepaskan","kenapa","ingat","sunyi","bayang"];
+  const log = t => { const d = document.createElement("div"); d.textContent = new Date().toLocaleTimeString() + " — " + t; $("gLog").prepend(d); };
+  const sens = () => +$("gSens").value / 10;
+  function onMotion(e){ const a = e.accelerationIncludingGravity || e.acceleration; if (!a) return;
+    const m = Math.abs(Math.hypot(a.x||0, a.y||0, a.z||0) - 9.8); mot = mot * 0.8 + Math.min(1, m / 3) * 0.2; }
+  function onOri(e){ const v = [e.alpha||0, e.beta||0, e.gamma||0];
+    if (lastOri) { const d = Math.abs(v[0]-lastOri[0]) % 360; ori = ori * 0.85 + Math.min(1, Math.min(d, 360-d) / 15) * 0.15; } lastOri = v; }
+  function cakap(teks){
+    log("👻 \"" + teks + "\"");
+    const lbl = $("orbStatusLabel"); if (lbl) lbl.textContent = "👻 " + teks + "...";
+    try { const u = new SpeechSynthesisUtterance(teks); u.lang = "ms-MY"; u.rate = 0.6; u.pitch = 0.3; u.volume = 0.8; speechSynthesis.speak(u); } catch (e) {}
+    if (navigator.vibrate) try { navigator.vibrate([80, 60, 160]); } catch (e) {}
+  }
+  function detik(){
+    // 1) Frekuensi rendah dari mikrofon
+    if (an) {
+      an.getFloatFrequencyData(fbuf);
+      const hz = ac.sampleRate / an.fftSize; let e = 0, n = 0;
+      for (let i = 1; i * hz < 120; i++) { e += Math.pow(10, fbuf[i] / 20); n++; }
+      const v = n ? e / n : 0;
+      lowBase = lowBase ? lowBase * 0.995 + v * 0.005 : v;
+      low = low * 0.8 + Math.min(1, Math.max(0, (v / (lowBase || 1e-6)) - 1) / 3) * 0.2;
+    }
+    // 2) Cahaya kamera
+    if (vid.readyState >= 2) {
+      const c = cvs.getContext("2d", { willReadFrequently: true }); c.drawImage(vid, 0, 0, 32, 24);
+      const d = c.getImageData(0, 0, 32, 24).data; let b = 0; for (let i = 0; i < d.length; i += 4) b += d[i] + d[i+1] + d[i+2];
+      b /= d.length * 0.75 * 255;
+      if (lastLight !== null) light = light * 0.85 + Math.min(1, Math.abs(b - lastLight) * 25) * 0.15;
+      lastLight = b;
+    }
+    const s = sens();
+    const raw = Math.min(1, (low * 0.45 + mot * 0.2 + light * 0.2 + ori * 0.15) * (0.6 + s * 1.4) + (Math.random() < 0.004 * s ? 0.5 : 0));
+    A.ghost.level = A.ghost.level * 0.9 + raw * 0.1;
+    $("gLow").textContent = (low * 100 | 0) + "%"; $("gMot").textContent = (mot * 100 | 0) + "%";
+    $("gLight").textContent = (light * 100 | 0) + "%"; $("gOri").textContent = (ori * 100 | 0) + "%";
+    const pc = A.ghost.level * 100 | 0; $("gLvl").textContent = pc + "%" + (pc > 45 ? " 🔴 AKTIF" : ""); $("gBar").style.width = pc + "%";
+    if (oscG) oscG.gain.value = 0.02 + A.ghost.level * 0.05;
+    const now = performance.now();
+    if (A.ghost.level > 0.45 && now - lastSpeak > 7000 && Math.random() < 0.05 && !(window.speechSynthesis && speechSynthesis.speaking)) {
+      lastSpeak = now;
+      const n = 1 + (Math.random() * 2.5 | 0); cakap(Array.from({ length: n }, () => KATA[Math.random() * KATA.length | 0]).join(" "));
+    }
+  }
+  async function hidup(){
+    try { if (typeof DeviceMotionEvent !== "undefined" && DeviceMotionEvent.requestPermission) await DeviceMotionEvent.requestPermission(); } catch (e) {}
+    addEventListener("devicemotion", onMotion); addEventListener("deviceorientation", onOri);
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      an = ac.createAnalyser(); an.fftSize = 8192; an.smoothingTimeConstant = 0.6; fbuf = new Float32Array(an.frequencyBinCount);
+      ac.createMediaStreamSource(stream).connect(an);
+      // Nada dengung 19Hz yang sangat perlahan (frekuensi "hantu")
+      osc = ac.createOscillator(); oscG = ac.createGain(); osc.frequency.value = 38; oscG.gain.value = 0.02; osc.connect(oscG).connect(ac.destination); osc.start();
+    } catch (e) { log("Mikrofon tidak dapat dibuka"); }
+    try { const v = await navigator.mediaDevices.getUserMedia({ video: { width: 160, height: 120 } }); vid.srcObject = v; vid.play(); } catch (e) { log("Kamera tidak dapat dibuka"); }
+    A.ghost.on = true; timer = setInterval(detik, 60);
+    log("Mod Ghost diaktifkan. Mengimbas persekitaran...");
+    setTimeout(() => cakap("siapa di sana"), 2500);
+  }
+  function mati(){
+    A.ghost.on = false; A.ghost.level = 0; clearInterval(timer);
+    removeEventListener("devicemotion", onMotion); removeEventListener("deviceorientation", onOri);
+    try { osc && osc.stop(); } catch (e) {}
+    [stream, vid.srcObject].forEach(st => st && st.getTracks().forEach(t => t.stop()));
+    try { ac && ac.close(); } catch (e) {} stream = ac = an = osc = oscG = null; vid.srcObject = null;
+  }
+  btn.addEventListener("click", async () => {
+    if (A.ghost.on) { mati(); btn.textContent = "👻 Mod Ghost: OFF"; btn.classList.remove("active-toggle"); panel.style.display = "none"; return; }
+    const k = prompt("🔒 Masukkan kata laluan Mod Ghost:");
+    if (k === null) return;
+    if (k.trim() !== "101010") { alert("❌ Kata laluan salah."); return; }
+    btn.textContent = "👻 Mod Ghost: ON"; btn.classList.add("active-toggle"); panel.style.display = "block";
+    await hidup();
+  });
+})();
+</script>
 </body>
 </html>
