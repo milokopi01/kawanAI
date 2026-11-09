@@ -210,7 +210,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     }
   }
 
-  /* Panel Kiri: Kamera, Pengesan Wajah & Orb Suara 3D */
+  /* Panel Kiri: Kamera, Pengesan  & Orb Suara 3D */
   .vision-panel {
     padding: 20px;
     display: flex;
@@ -321,7 +321,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
     box-shadow: 0 4px 12px rgba(14, 165, 233, 0.12);
   }
 
-  /* Kad Metrik Wajah & Emosi */
+  /* Kad Metrik  & Emosi */
   .metrics-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -924,7 +924,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
   /********************************************************************
    * 3. PENGESAN WAJAH 128-VEKTOR & EMOSI MASA NYATA (face-api.js)
    ********************************************************************/
-  async function muatModelWajah() {
+async function muatModelWajah() {
     try {
       aiStatusText.textContent = "Memuatkan AI Wajah...";
       await Promise.all([
@@ -934,7 +934,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwNxUGNQejg0BgXMVz_lyhn
         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
       ]);
       modelsLoaded = true;
-      bina semulaFaceMatcher();
+      binaSemulaFaceMatcher();
       aiStatusText.textContent = "AI Wajah & Groq Aktif";
       aiDot.classList.add("online");
     } catch (e) {
