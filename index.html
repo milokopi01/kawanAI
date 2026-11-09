@@ -2,22 +2,22 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxFARCziutORhvfgJD4V_J83r4tBu_a1hGq-_pOexFp-DE/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>AURA 3D — Sahabat AI & Pengesan Wajah Pintar</title>
+<title>AURA Terjemah — Penterjemah Suara Seluruh Dunia</title>
+<meta name="description" content="Cakap dalam Bahasa Melayu dan dengar terjemahannya serta-merta dalam lebih 80 bahasa dunia.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="theme-color" content="#02060c">
-<script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ===== AURA NEBULA — SKRIN PENUH: ZARAH DI ATAS, BORAK + KAMERA DI BAWAH ===== */
+  /* ===== AURA TERJEMAH — ZARAH DI ATAS, TERJEMAHAN DI BAWAH ===== */
   :root{
     --ink:#e6f6ff; --muted:#8fb3c9;
-    --glass:rgba(8,22,34,.55); --glass-strong:rgba(6,18,28,.86);
+    --glass:rgba(8,22,34,.55); --glass-strong:rgba(6,18,28,.9);
     --line:rgba(120,220,255,.16); --line-strong:rgba(120,220,255,.3);
     --cyan:#22d3ee; --sky:#0ea5e9; --rose:#f43f5e; --emerald:#10b981;
     --glow:0 0 22px rgba(34,211,238,.35);
@@ -27,23 +27,28 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
   html,body{height:100%;overflow:hidden;background:#02060c;color:var(--ink)}
   body{background:radial-gradient(ellipse at 50% 32%,#06202e 0%,#030a12 55%,#010307 100%);overscroll-behavior:none}
 
-  /* Kanvas zarah memenuhi seluruh skrin */
   #auraParticles{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:block}
 
-  /* Label status halus di bawah aura */
   .orb-status-label{
     position:fixed;left:50%;top:var(--label-top,54vh);transform:translateX(-50%);
     z-index:2;font-size:.78rem;font-weight:600;letter-spacing:.3px;color:rgba(200,240,255,.72);
-    text-shadow:0 0 12px rgba(34,211,238,.45);white-space:nowrap;pointer-events:none;
-    transition:opacity .4s ease;
+    text-shadow:0 0 12px rgba(34,211,238,.45);white-space:nowrap;pointer-events:none;transition:opacity .4s ease;
   }
 
-  /* Butang tetapan tersembunyi (sangat halus) */
+  /* Tajuk arah terjemahan di atas */
+  .top-direction{
+    position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:20;
+    display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;
+    background:rgba(8,22,34,.4);border:1px solid var(--line);font-size:.74rem;font-weight:700;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);max-width:calc(100vw - 80px);
+  }
+  .top-direction .arrow{color:var(--cyan)}
+
   .settings-fab{
     position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:20;
     width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
     background:rgba(8,22,34,.35);color:var(--ink);font-size:1.05rem;cursor:pointer;
-    opacity:.45;transition:opacity .2s, transform .2s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    opacity:.6;transition:opacity .2s, transform .2s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     display:flex;align-items:center;justify-content:center;
   }
   .settings-fab:hover,.settings-fab:focus-visible{opacity:1;transform:rotate(30deg)}
@@ -51,26 +56,45 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
   .status-dot-mini.online{background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
   .status-dot-mini.error{background:var(--rose);box-shadow:0 0 8px var(--rose)}
 
-  /* ===== DOK BAWAH: BORAK + KAMERA ===== */
+  /* ===== DOK BAWAH ===== */
   .bottom-dock{
     position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:5;
     width:100%;max-width:760px;padding:0 12px calc(12px + var(--safe-b));
     display:flex;flex-direction:column;gap:10px;
   }
   .chat-stream{
-    max-height:30vh;overflow-y:auto;padding:24px 4px 4px;display:flex;flex-direction:column;gap:10px;
+    max-height:max(120px,calc(100vh - var(--label-top,54vh) - 200px));overflow-y:auto;padding:24px 4px 4px;display:flex;flex-direction:column;gap:10px;
     scroll-behavior:smooth;scrollbar-width:none;
-    -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 34%);mask-image:linear-gradient(to bottom,transparent 0,#000 34%);
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 30%);mask-image:linear-gradient(to bottom,transparent 0,#000 30%);
   }
   .chat-stream::-webkit-scrollbar{display:none}
-  .msg-bubble{max-width:84%;padding:11px 15px;border-radius:20px;font-size:.9rem;line-height:1.5;animation:popMsg .3s ease-out;
+  .msg-bubble{max-width:86%;padding:11px 15px;border-radius:20px;font-size:.9rem;line-height:1.5;animation:popMsg .3s ease-out;
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
   @keyframes popMsg{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-  .msg-ai{align-self:flex-start;background:rgba(10,34,50,.62);color:var(--ink);border:1px solid rgba(34,211,238,.2);border-bottom-left-radius:6px}
+  .msg-ai{align-self:flex-start;background:rgba(10,34,50,.7);color:var(--ink);border:1px solid rgba(34,211,238,.25);border-bottom-left-radius:6px}
   .msg-user{align-self:flex-end;background:linear-gradient(135deg,rgba(14,165,233,.82),rgba(34,211,238,.72));color:#02131c;border-bottom-right-radius:6px}
-  .msg-meta{font-size:.66rem;opacity:.7;margin-top:4px;font-weight:600}
+  .msg-error{align-self:center;background:rgba(244,63,94,.16);border:1px solid rgba(244,63,94,.45);color:#fecdd3;font-size:.8rem}
+  .msg-meta{font-size:.66rem;opacity:.75;margin-top:4px;font-weight:700}
   .msg-user .msg-meta{color:#032a3a}
   .msg-ai .msg-meta{color:var(--muted)}
+  .msg-translation{font-size:1.02rem;font-weight:600}
+  .msg-roman{font-size:.8rem;color:var(--muted);font-style:italic;margin-top:3px}
+  .msg-actions{display:flex;gap:6px;margin-top:8px}
+  .msg-actions button{cursor:pointer;font-size:.72rem;font-weight:700;padding:5px 10px;border-radius:999px;
+    background:rgba(34,211,238,.12);border:1px solid var(--line-strong);color:var(--ink)}
+  .msg-actions button:active{transform:translateY(1px)}
+
+  /* Bar bahasa pantas */
+  .lang-bar{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+  .lang-chip{display:flex;flex-direction:column;gap:2px;padding:7px 12px;border-radius:16px;background:var(--glass);
+    border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);min-width:0}
+  .lang-chip-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:800}
+  .lang-select{appearance:none;-webkit-appearance:none;width:100%;border:none;background:transparent;color:var(--ink);
+    font-size:.88rem;font-weight:700;outline:none;cursor:pointer;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+  .lang-select option,.lang-select optgroup{background:#06121c;color:#e6f6ff}
+  .swap-btn{width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.15rem;font-weight:800;
+    background:rgba(34,211,238,.16);border:1px solid var(--line-strong);color:var(--ink);transition:transform .35s}
+  .swap-btn.spin{transform:rotate(180deg)}
 
   .chat-input-bar{
     display:flex;align-items:center;gap:8px;padding:8px;border-radius:24px;
@@ -78,22 +102,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
     backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
     box-shadow:0 20px 50px -15px rgba(0,0,0,.6),inset 0 1px 0 rgba(160,230,255,.1);
   }
-
-  /* Kamera kecil di bawah */
-  .camera-stage{
-    position:relative;flex-shrink:0;width:52px;height:52px;border-radius:16px;overflow:hidden;cursor:pointer;
-    background:#041420;border:1.5px solid var(--line-strong);box-shadow:var(--glow);
-    transition:width .35s ease,height .35s ease,border-radius .35s ease;
-  }
-  .camera-stage.expanded{width:132px;height:100px;border-radius:18px}
-  .camera-stage.face-on{border-color:rgba(34,211,238,.75)}
-  video#webcam{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
-  canvas#overlay{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);pointer-events:none}
-  .crystal-orb-container{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#041420;font-size:1.3rem;z-index:3}
-  .crystal-orb-container.active{display:flex}
-
   .mic-fab{
-    width:52px;height:52px;border-radius:16px;border:none;flex-shrink:0;cursor:pointer;font-size:1.3rem;
+    width:56px;height:56px;border-radius:18px;border:none;flex-shrink:0;cursor:pointer;font-size:1.35rem;
     background:linear-gradient(135deg,#0ea5e9,#22d3ee);color:#02131c;display:flex;align-items:center;justify-content:center;
     box-shadow:0 0 18px rgba(34,211,238,.35);transition:transform .2s;
   }
@@ -101,14 +111,14 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
   @keyframes pulseMic{from{transform:scale(1)}to{transform:scale(1.07)}}
   .chat-text-input{flex:1;min-width:0;border:none;background:transparent;font-size:.95rem;color:var(--ink);padding:8px 6px;outline:none;font-weight:500}
   .chat-text-input::placeholder{color:rgba(143,179,201,.7)}
-  .send-btn{padding:0 16px;height:44px;border-radius:14px;border:none;flex-shrink:0;cursor:pointer;font-weight:700;font-size:.85rem;
+  .send-btn{padding:0 14px;height:44px;border-radius:14px;flex-shrink:0;cursor:pointer;font-weight:700;font-size:.82rem;
     background:rgba(34,211,238,.16);color:var(--ink);border:1px solid var(--line-strong)}
 
-  /* ===== LACI TETAPAN (butang lain disembunyikan di sini) ===== */
+  /* ===== LACI TETAPAN ===== */
   .drawer-backdrop{position:fixed;inset:0;z-index:30;background:rgba(1,4,9,.45);opacity:0;pointer-events:none;transition:opacity .3s}
   .drawer-backdrop.open{opacity:1;pointer-events:auto}
   .settings-drawer{
-    position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(360px,92vw);padding:20px 16px calc(20px + var(--safe-b));
+    position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(380px,94vw);padding:20px 16px calc(20px + var(--safe-b));
     background:var(--glass-strong);border-left:1px solid var(--line);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
     transform:translateX(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1);overflow-y:auto;display:flex;flex-direction:column;gap:12px;
   }
@@ -116,19 +126,29 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
   .drawer-head{display:flex;align-items:center;justify-content:space-between}
   .drawer-head h2{font-size:1rem;font-weight:800}
   .drawer-close{background:none;border:none;color:var(--ink);font-size:1.3rem;cursor:pointer;padding:4px 8px}
+  .section-title{font-size:.66rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:800;margin-top:6px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:.78rem;font-weight:700}
+  .field .hint{font-size:.7rem;color:var(--muted);line-height:1.45}
+  .input-3d,.select-3d{width:100%;padding:11px 13px;border-radius:13px;border:1px solid rgba(120,220,255,.2);background:rgba(3,14,24,.7);
+    color:var(--ink);font-size:.88rem;font-weight:600;outline:none}
+  .select-3d{appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,#8fb3c9 50%),linear-gradient(135deg,#8fb3c9 50%,transparent 50%);
+    background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+  .select-3d option,.select-3d optgroup{background:#06121c;color:#e6f6ff}
+  input[type=range]{width:100%;accent-color:var(--cyan)}
+  .segmented{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .segmented button{cursor:pointer;padding:9px 6px;border-radius:12px;font-size:.76rem;font-weight:700;color:var(--ink);
+    background:rgba(20,50,70,.5);border:1px solid var(--line)}
+  .segmented button.on{background:rgba(34,211,238,.24);border-color:rgba(34,211,238,.6)}
   .pill-row{display:flex;gap:8px;flex-wrap:wrap}
   .pill-3d{padding:7px 12px;border-radius:999px;font-size:.76rem;font-weight:700;background:rgba(20,50,70,.5);border:1px solid var(--line);display:flex;align-items:center;gap:7px}
   .dot-ind{width:8px;height:8px;border-radius:50%;background:#94a3b8}
   .dot-ind.online{background:var(--emerald);box-shadow:0 0 10px var(--emerald)}
   .dot-ind.error{background:var(--rose);box-shadow:0 0 10px var(--rose)}
-  .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .metric-card{padding:10px 12px;border-radius:14px;background:rgba(3,14,24,.6);border:1px solid var(--line)}
-  .metric-label{font-size:.64rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:3px}
-  .metric-val{font-size:.82rem;font-weight:800}
-  .scan-progress{font-size:.78rem;font-weight:700;color:var(--cyan);min-height:16px}
   .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .btn-3d{appearance:none;cursor:pointer;font-weight:700;font-size:.8rem;padding:11px 12px;border-radius:14px;
-    background:rgba(20,50,70,.55);color:#d8f3ff;border:1px solid rgba(120,220,255,.22);display:flex;align-items:center;justify-content:center;gap:6px;transition:box-shadow .2s,transform .15s}
+    background:rgba(20,50,70,.55);color:#d8f3ff;border:1px solid rgba(120,220,255,.22);display:flex;align-items:center;justify-content:center;gap:6px;transition:box-shadow .2s,transform .15s;text-align:center}
   .btn-3d:hover{box-shadow:0 0 22px rgba(56,189,248,.4)}
   .btn-3d:active{transform:translateY(1px)}
   .btn-3d:disabled{opacity:.5;cursor:wait}
@@ -140,127 +160,208 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
   .api-test-result-box.dead{border-color:rgba(244,63,94,.5);color:#fecdd3}
   .api-test-result-box code{color:#fff}
 
-  /* ===== MODAL NAMA ===== */
-  .modal-backdrop{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(1,4,9,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-  .modal-backdrop.hidden{display:none}
-  .modal-card{max-width:420px;width:100%;padding:26px 22px;text-align:center;display:flex;flex-direction:column;gap:14px;border-radius:26px;background:var(--glass-strong);border:1px solid var(--line)}
-  .modal-card h2{font-size:1.25rem;font-weight:800}
-  .modal-card p{font-size:.84rem;color:var(--muted);line-height:1.5}
-  .input-3d{width:100%;padding:13px 15px;border-radius:14px;border:1px solid rgba(120,220,255,.2);background:rgba(3,14,24,.7);color:var(--ink);font-size:.95rem;font-weight:600;outline:none;text-align:center}
+  .toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-10px);z-index:60;
+    padding:9px 16px;border-radius:999px;background:var(--glass-strong);border:1px solid var(--line-strong);font-size:.8rem;font-weight:700;
+    opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:92vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%)}
 
-  @media (min-width:900px){ .chat-stream{max-height:32vh} }
 </style>
 </head>
 <body>
 
 <canvas id="auraParticles"></canvas>
-<div id="orbStatusLabel" class="orb-status-label">Sedia mendengar</div>
+<div id="orbStatusLabel" class="orb-status-label">Tekan 🎤 dan mula bercakap</div>
 
-<!-- Butang tetapan halus (butang lain disembunyikan di dalam laci) -->
+<div class="top-direction" id="topDirection"><span id="topSrc">🇲🇾 Melayu</span><span class="arrow">➜</span><span id="topTgt">🇬🇧 Inggeris</span></div>
 <button id="btnOpenSettings" class="settings-fab" aria-label="Tetapan">⚙️<span id="miniDot" class="status-dot-mini"></span></button>
-
-<!-- Modal Hanya Masuk Nama Sahaja -->
-<div id="onboardingModal" class="modal-backdrop">
-  <div class="modal-card">
-    <div style="font-size: 2.4rem;">💎</div>
-    <h2>Selamat Datang ke AURA 3D</h2>
-    <p>Masukkan nama anda dahulu supaya sahabat AI mengenali anda, mengingati memori wajah anda, dan bersedia berborak seperti manusia biasa.</p>
-    <input type="text" id="inputUserName" class="input-3d" placeholder="Masukkan nama panggilan anda..." autocomplete="off">
-    <button id="btnStartApp" class="btn-3d primary-3d" style="padding: 14px; font-size: 0.94rem;">
-      Mula Berbual Sekarang 🚀
-    </button>
-  </div>
-</div>
+<div id="toast" class="toast"></div>
 
 <!-- Laci Tetapan -->
 <div id="drawerBackdrop" class="drawer-backdrop"></div>
-<aside id="settingsDrawer" class="settings-drawer" aria-label="Tetapan AURA">
+<aside id="settingsDrawer" class="settings-drawer" aria-label="Tetapan Terjemahan">
   <div class="drawer-head">
-    <h2>💎 Tetapan AURA</h2>
+    <h2>🌍 Tetapan Terjemahan</h2>
     <button id="btnCloseSettings" class="drawer-close" aria-label="Tutup">✕</button>
   </div>
 
   <div class="pill-row">
-    <div class="pill-3d"><span id="aiDot" class="dot-ind"></span><span id="aiStatusText">Memuatkan Enjin...</span></div>
-    <div class="pill-3d">👤 <span id="activeUserBadge">Tetamu</span></div>
+    <div class="pill-3d"><span id="aiDot" class="dot-ind"></span><span id="aiStatusText">Menyambung...</span></div>
   </div>
 
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-label">Identiti Wajah</div>
-      <div class="metric-val" id="detectedIdentity">⏳ Mengimbas...</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Emosi Semasa</div>
-      <div class="metric-val" id="detectedEmotion">😊 Tenang / Neutral</div>
-    </div>
+  <div class="section-title">Bahasa</div>
+  <div class="field">
+    <label for="setSrc">🎙️ Bahasa yang saya cakap</label>
+    <select id="setSrc" class="select-3d"></select>
+  </div>
+  <div class="field">
+    <label for="setTgt">🔊 Terjemahkan ke bahasa</label>
+    <select id="setTgt" class="select-3d"></select>
+  </div>
+  <button id="btnSwapDrawer" class="btn-3d">⇄ Tukar Arah Bahasa</button>
+  <div class="field">
+    <label for="setCustom">✍️ Bahasa lain (taip sendiri)</label>
+    <input id="setCustom" class="input-3d" placeholder="Cth: Bahasa Kadazan, Loghat Kelantan, Klingon..." autocomplete="off">
+    <span class="hint">Jika diisi, ia menggantikan pilihan "Terjemahkan ke" di atas. Kosongkan untuk guna senarai.</span>
   </div>
 
-  <div id="faceScanStatus" class="scan-progress"></div>
+  <div class="section-title">Gaya Terjemahan</div>
+  <div class="segmented" id="styleSeg">
+    <button data-style="biasa">Biasa</button>
+    <button data-style="formal">Formal</button>
+    <button data-style="santai">Santai</button>
+  </div>
 
-  <button id="btnRegisterFace" class="btn-3d primary-3d">📸 Rakam & Ingat Wajah Saya (3 Saat)</button>
-
+  <div class="section-title">Suara & Pendengaran</div>
   <div class="btn-row">
-    <button id="btnHideCam" class="btn-3d">🙈 Sembunyi Kamera</button>
-    <button id="btnMicOnlyMode" class="btn-3d">🎙️ Guna Mic Sahaja</button>
+    <button id="btnAuto" class="btn-3d">🔄 Dengar Automatik</button>
+    <button id="btnSpeak" class="btn-3d">🔊 Bacakan Terjemahan</button>
   </div>
   <div class="btn-row">
-    <button id="btnAutoHandsfree" class="btn-3d active-toggle">🔄 Dengar Automatik: ON</button>
-    <button id="btnToggleVoiceOut" class="btn-3d active-toggle">🔊 Suara AI: ON</button>
+    <button id="btnTwoWay" class="btn-3d">🗣️ Mod Perbualan 2 Hala</button>
+    <button id="btnRoman" class="btn-3d">🔤 Papar Sebutan</button>
   </div>
-  <div class="btn-row">
-    <button id="btnChangeName" class="btn-3d">✏️ Tukar Nama</button>
-    <button id="btnClearMemory" class="btn-3d">🧹 Bersih Skrin</button>
+  <span class="hint" style="font-size:.7rem;color:var(--muted);line-height:1.45">Mod Perbualan 2 Hala: selepas terjemahan dibacakan, arah bahasa bertukar sendiri supaya orang di hadapan anda boleh membalas dalam bahasanya.</span>
+
+  <div class="field">
+    <label for="setVoice">🎧 Suara pembaca</label>
+    <select id="setVoice" class="select-3d"></select>
+    <span class="hint" id="voiceHint"></span>
+  </div>
+  <div class="field">
+    <label for="setRate">⏩ Kelajuan suara: <span id="rateVal">1.0x</span></label>
+    <input type="range" id="setRate" min="0.6" max="1.6" step="0.1">
   </div>
 
-  <button id="btnTestSheetKey" class="btn-3d emerald-3d">🔑 Uji API Key & Model (Sheet A1)</button>
+  <div class="section-title">Lain-lain</div>
+  <div class="btn-row">
+    <button id="btnClear" class="btn-3d">🧹 Bersih Sejarah</button>
+    <button id="btnTestSheetKey" class="btn-3d emerald-3d">🔑 Uji API Key</button>
+  </div>
   <div id="sheetKeyTestBox" class="api-test-result-box" style="display: none;"></div>
 </aside>
 
-<!-- Dok Bawah: Borak + Kamera Sahaja -->
+<!-- Dok Bawah -->
 <div class="bottom-dock">
   <div id="chatStream" class="chat-stream"></div>
 
+  <div class="lang-bar">
+    <label class="lang-chip"><span class="lang-chip-label">Saya cakap</span><select id="quickSrc" class="lang-select"></select></label>
+    <button id="btnSwap" class="swap-btn" aria-label="Tukar arah bahasa">⇄</button>
+    <label class="lang-chip"><span class="lang-chip-label">Terjemah ke</span><select id="quickTgt" class="lang-select"></select></label>
+  </div>
+
   <div class="chat-input-bar">
-    <div id="cameraStage" class="camera-stage" title="Tekan untuk besarkan / kecilkan kamera">
-      <video id="webcam" autoplay muted playsinline></video>
-      <canvas id="overlay"></canvas>
-      <div id="crystalOrbView" class="crystal-orb-container"><span id="orbSphere">🎙️</span></div>
-    </div>
     <button id="btnMicTalk" class="mic-fab" title="Tekan untuk bercakap">🎤</button>
     <input type="text" id="textMessageInput" class="chat-text-input" placeholder="Cakap atau taip di sini..." autocomplete="off">
-    <button id="btnSendText" class="send-btn">Hantar</button>
+    <button id="btnSendText" class="send-btn">Terjemah</button>
   </div>
 </div>
 
 <script>
   /********************************************************************
-   * PEMBOLEH UBAH KEADAAN & KONFIGURASI UTAMA
+   * SENARAI BAHASA DUNIA  [kod suara, nama Melayu, nama Inggeris (untuk AI), bendera]
    ********************************************************************/
-  const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
-  let userName = localStorage.getItem("aura_user_name") || "";
-  let faceMemoryList = JSON.parse(localStorage.getItem("aura_face_memory_v1") || "[]");
-  let chatHistory = JSON.parse(localStorage.getItem("aura_chat_history_v1") || "[]");
+  const LANGS = [
+    ["ms-MY","Bahasa Melayu","Malay (Malaysia)","🇲🇾"],
+    ["id-ID","Bahasa Indonesia","Indonesian","🇮🇩"],
+    ["en-US","Inggeris (Amerika)","English (American)","🇺🇸"],
+    ["en-GB","Inggeris (British)","English (British)","🇬🇧"],
+    ["zh-CN","Cina Mandarin (Ringkas)","Mandarin Chinese (Simplified characters)","🇨🇳"],
+    ["zh-TW","Cina Mandarin (Tradisional)","Mandarin Chinese (Traditional characters, Taiwan)","🇹🇼"],
+    ["zh-HK","Kantonis","Cantonese (Traditional characters, Hong Kong)","🇭🇰"],
+    ["ta-IN","Tamil","Tamil","🇮🇳"],
+    ["hi-IN","Hindi","Hindi","🇮🇳"],
+    ["ar-SA","Arab","Arabic (Modern Standard)","🇸🇦"],
+    ["ja-JP","Jepun","Japanese","🇯🇵"],
+    ["ko-KR","Korea","Korean","🇰🇷"],
+    ["th-TH","Thai","Thai","🇹🇭"],
+    ["vi-VN","Vietnam","Vietnamese","🇻🇳"],
+    ["fil-PH","Filipina (Tagalog)","Filipino (Tagalog)","🇵🇭"],
+    ["my-MM","Myanmar","Burmese","🇲🇲"],
+    ["km-KH","Khmer (Kemboja)","Khmer","🇰🇭"],
+    ["lo-LA","Lao","Lao","🇱🇦"],
+    ["jv-ID","Jawa","Javanese","🇮🇩"],
+    ["su-ID","Sunda","Sundanese","🇮🇩"],
+    ["bn-BD","Bengali","Bengali","🇧🇩"],
+    ["ur-PK","Urdu","Urdu","🇵🇰"],
+    ["ne-NP","Nepal","Nepali","🇳🇵"],
+    ["si-LK","Sinhala","Sinhala","🇱🇰"],
+    ["te-IN","Telugu","Telugu","🇮🇳"],
+    ["ml-IN","Malayalam","Malayalam","🇮🇳"],
+    ["kn-IN","Kannada","Kannada","🇮🇳"],
+    ["mr-IN","Marathi","Marathi","🇮🇳"],
+    ["gu-IN","Gujarati","Gujarati","🇮🇳"],
+    ["pa-IN","Punjabi","Punjabi","🇮🇳"],
+    ["fa-IR","Parsi","Persian (Farsi)","🇮🇷"],
+    ["tr-TR","Turki","Turkish","🇹🇷"],
+    ["he-IL","Ibrani","Hebrew","🇮🇱"],
+    ["az-AZ","Azerbaijan","Azerbaijani","🇦🇿"],
+    ["kk-KZ","Kazakh","Kazakh","🇰🇿"],
+    ["uz-UZ","Uzbek","Uzbek","🇺🇿"],
+    ["mn-MN","Mongolia","Mongolian","🇲🇳"],
+    ["ka-GE","Georgia","Georgian","🇬🇪"],
+    ["hy-AM","Armenia","Armenian","🇦🇲"],
+    ["ru-RU","Rusia","Russian","🇷🇺"],
+    ["uk-UA","Ukraine","Ukrainian","🇺🇦"],
+    ["fr-FR","Perancis","French","🇫🇷"],
+    ["de-DE","Jerman","German","🇩🇪"],
+    ["es-ES","Sepanyol","Spanish (Spain)","🇪🇸"],
+    ["es-MX","Sepanyol (Amerika Latin)","Spanish (Latin America)","🇲🇽"],
+    ["pt-PT","Portugis","Portuguese (Portugal)","🇵🇹"],
+    ["pt-BR","Portugis (Brazil)","Portuguese (Brazil)","🇧🇷"],
+    ["it-IT","Itali","Italian","🇮🇹"],
+    ["nl-NL","Belanda","Dutch","🇳🇱"],
+    ["sv-SE","Sweden","Swedish","🇸🇪"],
+    ["nb-NO","Norway","Norwegian (Bokmål)","🇳🇴"],
+    ["da-DK","Denmark","Danish","🇩🇰"],
+    ["fi-FI","Finland","Finnish","🇫🇮"],
+    ["is-IS","Iceland","Icelandic","🇮🇸"],
+    ["pl-PL","Poland","Polish","🇵🇱"],
+    ["cs-CZ","Czech","Czech","🇨🇿"],
+    ["sk-SK","Slovakia","Slovak","🇸🇰"],
+    ["hu-HU","Hungary","Hungarian","🇭🇺"],
+    ["ro-RO","Romania","Romanian","🇷🇴"],
+    ["bg-BG","Bulgaria","Bulgarian","🇧🇬"],
+    ["el-GR","Greek","Greek","🇬🇷"],
+    ["sr-RS","Serbia","Serbian","🇷🇸"],
+    ["hr-HR","Croatia","Croatian","🇭🇷"],
+    ["bs-BA","Bosnia","Bosnian","🇧🇦"],
+    ["sl-SI","Slovenia","Slovenian","🇸🇮"],
+    ["mk-MK","Macedonia","Macedonian","🇲🇰"],
+    ["sq-AL","Albania","Albanian","🇦🇱"],
+    ["lt-LT","Lithuania","Lithuanian","🇱🇹"],
+    ["lv-LV","Latvia","Latvian","🇱🇻"],
+    ["et-EE","Estonia","Estonian","🇪🇪"],
+    ["ga-IE","Ireland","Irish (Gaelic)","🇮🇪"],
+    ["cy-GB","Wales","Welsh","🏴"],
+    ["ca-ES","Catalan","Catalan","🇪🇸"],
+    ["eu-ES","Basque","Basque","🇪🇸"],
+    ["gl-ES","Galicia","Galician","🇪🇸"],
+    ["sw-KE","Swahili","Swahili","🇰🇪"],
+    ["am-ET","Amharic","Amharic","🇪🇹"],
+    ["so-SO","Somali","Somali","🇸🇴"],
+    ["ha-NG","Hausa","Hausa","🇳🇬"],
+    ["yo-NG","Yoruba","Yoruba","🇳🇬"],
+    ["ig-NG","Igbo","Igbo","🇳🇬"],
+    ["zu-ZA","Zulu","Zulu","🇿🇦"],
+    ["af-ZA","Afrikaans","Afrikaans","🇿🇦"],
+    ["mi-NZ","Maori","Maori","🇳🇿"],
+    ["la","Latin","Latin","🏛️"]
+  ];
+  const cariBahasa = (kod) => LANGS.find(l => l[0] === kod) || LANGS[0];
 
-  // Buang sebarang cache kunci lama yang mungkin tersimpan sebelum ini
-  localStorage.removeItem("aura_groq_key_cache");
+  /********************************************************************
+   * TETAPAN (disimpan dalam peranti)
+   ********************************************************************/
+  const KUNCI_TETAPAN = "terjemah_tetapan_v1";
+  const KUNCI_SEJARAH = "terjemah_sejarah_v1";
+  const DEFAULT = { src: "ms-MY", tgt: "en-US", custom: "", style: "biasa", auto: true, speak: true, twoWay: false, roman: true, rate: 1.0, voice: "" };
+  let S = Object.assign({}, DEFAULT, JSON.parse(localStorage.getItem(KUNCI_TETAPAN) || "{}"));
+  let sejarah = JSON.parse(localStorage.getItem(KUNCI_SEJARAH) || "[]");
+  const simpanTetapan = () => localStorage.setItem(KUNCI_TETAPAN, JSON.stringify(S));
+  const simpanSejarah = () => localStorage.setItem(KUNCI_SEJARAH, JSON.stringify(sejarah.slice(-60)));
 
-  let faceMatcher = null;
-  let modelsLoaded = false;
-  let webcamStream = null;
-  let detectionInterval = null;
-
-  let isCameraHidden = false;
-  let isMicOnlyMode = false;
-  let isHandsfree = true;
-  let isVoiceOutputOn = true;
-  let isAiSpeaking = false;
-  let isListening = false;
-
-  let currentIdentity = "Belum Dikenali";
-  let currentEmotion = "Tenang / Neutral";
-
-  // Keadaan dikongsi dengan enjin zarah AURA (supaya zarah "hidup & faham")
+  // Keadaan dikongsi dengan enjin zarah AURA
   window.AURA = {
     listening: false, speaking: false, thinking: false,
     emotion: "neutral", face: { x: 0, y: 0, seen: false },
@@ -268,690 +369,359 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
   };
   const AURA = window.AURA;
 
-  const EMOTION_MAP = {
-    neutral: "😊 Tenang / Neutral",
-    happy: "😄 Gembira / Ceria",
-    sad: "😢 Sedih / Murung",
-    angry: "😠 Tegang / Marah",
-    fearful: "😟 Risau / Cemas",
-    disgusted: "😣 Kurang Selesa",
-    surprised: "😮 Terkejut / Teruja"
-  };
+  let isListening = false, isSpeaking = false, isBusy = false;
+  let gelungAktif = false; // gelung dengar automatik bermula selepas pengguna tekan mic
 
-  // Elemen DOM
-  const onboardingModal = document.getElementById("onboardingModal");
-  const inputUserName = document.getElementById("inputUserName");
-  const btnStartApp = document.getElementById("btnStartApp");
-  const activeUserBadge = document.getElementById("activeUserBadge");
-  const aiDot = document.getElementById("aiDot");
-  const aiStatusText = document.getElementById("aiStatusText");
+  const $ = (id) => document.getElementById(id);
+  const setSrc = $("setSrc"), setTgt = $("setTgt"), quickSrc = $("quickSrc"), quickTgt = $("quickTgt");
+  const setCustom = $("setCustom"), setVoice = $("setVoice"), voiceHint = $("voiceHint"), setRate = $("setRate"), rateVal = $("rateVal");
+  const btnAuto = $("btnAuto"), btnSpeak = $("btnSpeak"), btnTwoWay = $("btnTwoWay"), btnRoman = $("btnRoman");
+  const aiDot = $("aiDot"), aiStatusText = $("aiStatusText"), miniDot = $("miniDot");
+  const chatStream = $("chatStream"), btnMicTalk = $("btnMicTalk"), textInput = $("textMessageInput"), btnSendText = $("btnSendText");
+  const orbStatusLabel = $("orbStatusLabel");
 
-  const videoEl = document.getElementById("webcam");
-  const cameraStage = document.getElementById("cameraStage");
-  const miniDot = document.getElementById("miniDot");
-  const canvasEl = document.getElementById("overlay");
-  const crystalOrbView = document.getElementById("crystalOrbView");
-  const orbSphere = document.getElementById("orbSphere");
-  const orbStatusLabel = document.getElementById("orbStatusLabel");
+  function namaSumber() { return cariBahasa(S.src)[2]; }
+  function namaSasaran() { return S.custom.trim() || cariBahasa(S.tgt)[2]; }
+  function labelSumber() { const l = cariBahasa(S.src); return `${l[3]} ${l[1]}`; }
+  function labelSasaran() { if (S.custom.trim()) return `🌐 ${S.custom.trim()}`; const l = cariBahasa(S.tgt); return `${l[3]} ${l[1]}`; }
+  function kodSuaraSasaran() { return S.custom.trim() ? "" : S.tgt; }
 
-  const detectedIdentityEl = document.getElementById("detectedIdentity");
-  const detectedEmotionEl = document.getElementById("detectedEmotion");
-  const faceScanStatus = document.getElementById("faceScanStatus");
+  function isiSelect(sel) {
+    sel.innerHTML = LANGS.map(l => `<option value="${l[0]}">${l[3]} ${l[1]}</option>`).join("");
+  }
+  [setSrc, setTgt, quickSrc, quickTgt].forEach(isiSelect);
 
-  const btnRegisterFace = document.getElementById("btnRegisterFace");
-  const btnHideCam = document.getElementById("btnHideCam");
-  const btnMicOnlyMode = document.getElementById("btnMicOnlyMode");
-  const btnAutoHandsfree = document.getElementById("btnAutoHandsfree");
-  const btnToggleVoiceOut = document.getElementById("btnToggleVoiceOut");
-  const btnTestSheetKey = document.getElementById("btnTestSheetKey");
-  const sheetKeyTestBox = document.getElementById("sheetKeyTestBox");
-  const btnChangeName = document.getElementById("btnChangeName");
-  const btnClearMemory = document.getElementById("btnClearMemory");
+  function toast(teks) {
+    const t = $("toast"); t.textContent = teks; t.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+  }
 
-  const chatStream = document.getElementById("chatStream");
-  const btnMicTalk = document.getElementById("btnMicTalk");
-  const textMessageInput = document.getElementById("textMessageInput");
-  const btnSendText = document.getElementById("btnSendText");
+  function paparTetapan() {
+    setSrc.value = quickSrc.value = S.src;
+    setTgt.value = quickTgt.value = S.tgt;
+    quickTgt.disabled = !!S.custom.trim();
+    setTgt.disabled = !!S.custom.trim();
+    setCustom.value = S.custom;
+    $("topSrc").textContent = labelSumber();
+    $("topTgt").textContent = labelSasaran();
+    textInput.placeholder = `Cakap atau taip dalam ${cariBahasa(S.src)[1]}...`;
+    document.querySelectorAll("#styleSeg button").forEach(b => b.classList.toggle("on", b.dataset.style === S.style));
+    btnAuto.classList.toggle("active-toggle", S.auto); btnAuto.textContent = `🔄 Dengar Automatik: ${S.auto ? "ON" : "OFF"}`;
+    btnSpeak.classList.toggle("active-toggle", S.speak); btnSpeak.textContent = `${S.speak ? "🔊" : "🔇"} Bacakan: ${S.speak ? "ON" : "OFF"}`;
+    btnTwoWay.classList.toggle("active-toggle", S.twoWay); btnTwoWay.textContent = `🗣️ 2 Hala: ${S.twoWay ? "ON" : "OFF"}`;
+    btnRoman.classList.toggle("active-toggle", S.roman); btnRoman.textContent = `🔤 Sebutan: ${S.roman ? "ON" : "OFF"}`;
+    setRate.value = S.rate; rateVal.textContent = Number(S.rate).toFixed(1) + "x";
+    isiSenaraiSuara();
+  }
+
+  function tukarBahasa(medan, nilai) {
+    S[medan] = nilai;
+    if (S.src === S.tgt && !S.custom.trim()) {
+      // elak bahasa sama: tukar yang satu lagi
+      if (medan === "src") S.tgt = S.src === "en-US" ? "ms-MY" : "en-US"; else S.src = S.tgt === "ms-MY" ? "en-US" : "ms-MY";
+    }
+    if (medan === "tgt") S.voice = "";
+    simpanTetapan(); paparTetapan();
+  }
+  setSrc.addEventListener("change", e => tukarBahasa("src", e.target.value));
+  quickSrc.addEventListener("change", e => tukarBahasa("src", e.target.value));
+  setTgt.addEventListener("change", e => tukarBahasa("tgt", e.target.value));
+  quickTgt.addEventListener("change", e => tukarBahasa("tgt", e.target.value));
+  setCustom.addEventListener("input", e => { S.custom = e.target.value; S.voice = ""; simpanTetapan(); paparTetapan(); });
+
+  function tukarArah(senyap) {
+    if (S.custom.trim()) { if (!senyap) toast("Kosongkan 'Bahasa lain' untuk menukar arah."); return false; }
+    const s = S.src; S.src = S.tgt; S.tgt = s; S.voice = "";
+    simpanTetapan(); paparTetapan();
+    const b = $("btnSwap"); b.classList.toggle("spin");
+    if (!senyap) toast(`Sekarang: ${labelSumber()} ➜ ${labelSasaran()}`);
+    return true;
+  }
+  $("btnSwap").addEventListener("click", () => tukarArah(false));
+  $("btnSwapDrawer").addEventListener("click", () => tukarArah(false));
+
+  document.querySelectorAll("#styleSeg button").forEach(b => b.addEventListener("click", () => { S.style = b.dataset.style; simpanTetapan(); paparTetapan(); }));
+  btnAuto.addEventListener("click", () => { S.auto = !S.auto; if (!S.auto) gelungAktif = false; simpanTetapan(); paparTetapan(); });
+  btnSpeak.addEventListener("click", () => { S.speak = !S.speak; if (!S.speak) window.speechSynthesis && speechSynthesis.cancel(); simpanTetapan(); paparTetapan(); });
+  btnTwoWay.addEventListener("click", () => { S.twoWay = !S.twoWay; simpanTetapan(); paparTetapan(); });
+  btnRoman.addEventListener("click", () => { S.roman = !S.roman; simpanTetapan(); paparTetapan(); });
+  setRate.addEventListener("input", e => { S.rate = Number(e.target.value); rateVal.textContent = S.rate.toFixed(1) + "x"; simpanTetapan(); });
+  setVoice.addEventListener("change", e => { S.voice = e.target.value; simpanTetapan(); cakap("Hello, 1 2 3", kodSuaraSasaran(), true); });
 
   /********************************************************************
-   * 1. PENDAFTARAN NAMA & INISIALISASI AWAL
+   * SUARA PEMBACA (Text-to-Speech) IKUT BAHASA SASARAN
    ********************************************************************/
-  window.addEventListener("DOMContentLoaded", () => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
-    }
+  const normLang = (l) => String(l || "").replace("_", "-").toLowerCase();
+  function suaraUntuk(kod) {
+    if (!("speechSynthesis" in window)) return [];
+    const v = speechSynthesis.getVoices();
+    if (!kod) return v;
+    const k = normLang(kod), asas = k.split("-")[0];
+    const tepat = v.filter(x => normLang(x.lang) === k);
+    const sama = v.filter(x => normLang(x.lang).split("-")[0] === asas && normLang(x.lang) !== k);
+    // Mandarin/Kantonis: kongsi kod "zh"
+    return tepat.concat(sama);
+  }
+  function isiSenaraiSuara() {
+    const kod = kodSuaraSasaran();
+    const senarai = suaraUntuk(kod);
+    setVoice.innerHTML = `<option value="">Automatik (terbaik untuk bahasa ini)</option>` +
+      senarai.map(v => `<option value="${v.name.replace(/"/g, "&quot;")}">${v.name} (${v.lang})</option>`).join("");
+    setVoice.value = senarai.some(v => v.name === S.voice) ? S.voice : "";
+    if (!("speechSynthesis" in window)) voiceHint.textContent = "Pelayar ini tidak menyokong suara pembaca.";
+    else if (kod && !senarai.length) voiceHint.textContent = "⚠️ Peranti ini tiada suara untuk bahasa ini. Terjemahan tetap dipaparkan sebagai teks. Cuba pasang suara bahasa ini dalam tetapan telefon (Text-to-Speech) atau guna Chrome.";
+    else voiceHint.textContent = `${senarai.length} suara tersedia.`;
+  }
+  if ("speechSynthesis" in window) {
+    speechSynthesis.onvoiceschanged = isiSenaraiSuara;
+    speechSynthesis.getVoices();
+  }
 
-    if (userName) {
-      onboardingModal.classList.add("hidden");
-      activeUserBadge.textContent = userName;
-      currentIdentity = userName;
-      detectedIdentityEl.textContent = "👤 " + userName;
-      mulakanSistemPenuh();
-    } else {
-      onboardingModal.classList.remove("hidden");
-      inputUserName.focus();
-    }
-  });
+  function cakap(teks, kod, ujian) {
+    if (!("speechSynthesis" in window) || (!S.speak && !ujian)) { selepasCakap(); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(teks).replace(/[*#_~`]/g, ""));
+    const senarai = suaraUntuk(kod);
+    const pilihan = senarai.find(v => v.name === S.voice) || senarai[0];
+    if (pilihan) { u.voice = pilihan; u.lang = pilihan.lang; } else if (kod) { u.lang = kod; }
+    u.rate = S.rate || 1;
 
-  btnStartApp.addEventListener("click", () => {
-    const val = inputUserName.value.trim();
-    if (!val) {
-      alert("Sila masukkan nama anda terlebih dahulu.");
-      return;
-    }
-    userName = val;
-    localStorage.setItem("aura_user_name", userName);
-    activeUserBadge.textContent = userName;
-    currentIdentity = userName;
-    detectedIdentityEl.textContent = "👤 " + userName;
-    onboardingModal.classList.add("hidden");
-    mulakanSistemPenuh();
-  });
+    u.onstart = () => {
+      isSpeaking = true; AURA.speaking = true; AURA.wordKick = 1;
+      if (recognition && isListening) { try { recognition.stop(); } catch (e) {} }
+      orbStatusLabel.textContent = "🔊 Membacakan terjemahan...";
+    };
+    u.onboundary = () => { AURA.wordKick = 1; };
+    u.onend = u.onerror = () => {
+      isSpeaking = false; AURA.speaking = false;
+      if (!ujian) selepasCakap();
+    };
+    speechSynthesis.speak(u);
+  }
 
-  inputUserName.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") btnStartApp.click();
-  });
-
-  btnChangeName.addEventListener("click", () => {
-    inputUserName.value = userName;
-    onboardingModal.classList.remove("hidden");
-  });
-
-  async function mulakanSistemPenuh() {
-    paparSejarahBorak();
-    await segerakMemoriDariSheet();
-    await muatModelWajah();
-    if (!isMicOnlyMode) {
-      await hidupkanKamera();
-    }
-    sediakanPengiktirafanSuara();
-
-    if (chatHistory.length === 0) {
-      const sapaan = `Hai ${userName}! Aku dah sedia. Kita boleh terus berborak menggunakan suara atau teks sekarang.`;
-      tambahMesejKeSkrin("ai", sapaan);
-      cakapSuaraAI(sapaan);
-    }
+  function selepasCakap() {
+    if (S.twoWay) tukarArah(true);
+    if (S.auto && gelungAktif) setTimeout(() => mulaDengar(), 450);
   }
 
   /********************************************************************
-   * 2. UJI TERUS API KEY DI DALAM GOOGLE SHEET (TAB 'apikey' SEL A1)
-   ********************************************************************/
-  btnTestSheetKey.addEventListener("click", async () => {
-    sheetKeyTestBox.style.display = "block";
-    sheetKeyTestBox.className = "api-test-result-box";
-    sheetKeyTestBox.innerHTML = "⏳ Sedang menyemak kunci API di dalam Google Sheet (tab <b>apikey</b> sel <b>A1</b>)...";
-    btnTestSheetKey.disabled = true;
-
-    try {
-      const res = await fetch(`${GAS_URL}?action=testKey&t=${Date.now()}`, {
-        method: "GET",
-        redirect: "follow"
-      });
-      const data = await res.json();
-
-      if (data.alive) {
-        sheetKeyTestBox.className = "api-test-result-box alive";
-        sheetKeyTestBox.innerHTML = `✅ <b>API KEY SHEET A1 HIDUP!</b><br>• Kunci Dikesan: <code>${data.maskedKey}</code> (${data.keyLength} aksara)<br>• Kelajuan Groq: <b>${data.latencyMs} ms</b><br>• Model Digunakan: <b>${data.model || "-"}</b>`;
-        aiDot.className = "dot-ind online";
-        aiStatusText.textContent = `Sheet A1 Aktif (${data.latencyMs}ms)`;
-      } else {
-        sheetKeyTestBox.className = "api-test-result-box dead";
-        sheetKeyTestBox.innerHTML = `❌ <b>MASALAH KUNCI DI SHEET A1:</b><br>• Kunci Dikesan: <code>${data.maskedKey || "Tiada"}</code> (${data.keyLength || 0} aksara)<br>• Ralat: ${data.message}<br><i>Pastikan anda telah klik Deploy > Manage deployments > Edit > New version di Apps Script jika baru menukar kod Code.gs.</i>`;
-        aiDot.className = "dot-ind error";
-        aiStatusText.textContent = "Ralat Kunci A1";
-      }
-    } catch (err) {
-      sheetKeyTestBox.className = "api-test-result-box dead";
-      sheetKeyTestBox.innerHTML = `❌ <b>GAGAL MENGHUBUNGI APPS SCRIPT:</b><br>${err.message}`;
-      aiDot.className = "dot-ind error";
-    }
-
-    btnTestSheetKey.disabled = false;
-  });
-
-  /********************************************************************
-   * 3. SEGERAK MEMORI WAJAH DARI GOOGLE SHEET
-   ********************************************************************/
-  async function segerakMemoriDariSheet() {
-    if (!GAS_URL || GAS_URL.includes("MASUKKAN_URL")) {
-      aiStatusText.textContent = "Semak Baris Ke-5 (GAS_URL)";
-      aiDot.className = "dot-ind error";
-      return;
-    }
-    try {
-      aiStatusText.textContent = "Menyambung Google Sheet...";
-      const res = await fetch(`${GAS_URL}?action=getConfig&t=${Date.now()}`, {
-        method: "GET",
-        redirect: "follow"
-      });
-      const data = await res.json();
-      if (data.status === "success") {
-        if (Array.isArray(data.faces) && data.faces.length > 0) {
-          data.faces.forEach(remoteFace => {
-            const idx = faceMemoryList.findIndex(f => f.name.toLowerCase() === remoteFace.name.toLowerCase());
-            if (idx >= 0) {
-              faceMemoryList[idx] = remoteFace;
-            } else {
-              faceMemoryList.push(remoteFace);
-            }
-          });
-          localStorage.setItem("aura_face_memory_v1", JSON.stringify(faceMemoryList));
-        }
-        aiStatusText.textContent = `Sheet A1 Aktif (${data.maskedKey})`;
-        aiDot.className = "dot-ind online";
-      } else {
-        aiStatusText.textContent = "Semak Sheet A1";
-        aiDot.className = "dot-ind error";
-      }
-    } catch (err) {
-      aiStatusText.textContent = "Sedia Berhubung";
-      aiDot.className = "dot-ind online";
-    }
-  }
-
-  /********************************************************************
-   * 4. PENGESAN WAJAH 128-VEKTOR & EMOSI MASA NYATA (face-api.js)
-   ********************************************************************/
-  async function muatModelWajah() {
-    try {
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-      ]);
-      modelsLoaded = true;
-      binaSemulaFaceMatcher();
-    } catch (e) {
-      console.error("Ralat muat model wajah:", e);
-    }
-  }
-
-  function binaSemulaFaceMatcher() {
-    if (!modelsLoaded || faceMemoryList.length === 0) {
-      faceMatcher = null;
-      return;
-    }
-    const labeledDescriptors = faceMemoryList.map(item => {
-      const floatArrays = item.descriptors.map(d => new Float32Array(d));
-      return new faceapi.LabeledFaceDescriptors(item.name, floatArrays);
-    });
-    faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.52);
-  }
-
-  async function hidupkanKamera() {
-    if (isMicOnlyMode) return;
-    try {
-      webcamStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
-        audio: false
-      });
-      videoEl.srcObject = webcamStream;
-      await videoEl.play();
-      mulakanImbasanBerterusan();
-    } catch (err) {
-      detectedIdentityEl.textContent = "🎙️ Kamera Tidak Aktif";
-      detectedEmotionEl.textContent = "Mod Audio Sahaja";
-      aktifkanPaparanOrb(true, "Mod Mikrofon Sahaja Aktif");
-    }
-  }
-
-  function hentikanKameraSepenuhnya() {
-    if (detectionInterval) {
-      clearInterval(detectionInterval);
-      detectionInterval = null;
-    }
-    if (webcamStream) {
-      webcamStream.getTracks().forEach(track => track.stop());
-      webcamStream = null;
-    }
-    videoEl.srcObject = null;
-    AURA.face.seen = false;
-    AURA.emotion = "neutral";
-    cameraStage.classList.remove("face-on");
-    const ctx = canvasEl.getContext("2d");
-    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-  }
-
-  function mulakanImbasanBerterusan() {
-    if (detectionInterval) clearInterval(detectionInterval);
-
-    detectionInterval = setInterval(async () => {
-      if (!modelsLoaded || isMicOnlyMode || videoEl.paused || videoEl.ended) return;
-
-      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
-      const detection = await faceapi
-        .detectSingleFace(videoEl, options)
-        .withFaceLandmarks()
-        .withFaceExpressions()
-        .withFaceDescriptor();
-
-      const ctx = canvasEl.getContext("2d");
-      canvasEl.width = videoEl.videoWidth || 640;
-      canvasEl.height = videoEl.videoHeight || 480;
-      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-
-      if (detection) {
-        const exp = detection.expressions;
-        let topEmotionKey = "neutral";
-        let maxScore = 0;
-        for (const [k, v] of Object.entries(exp)) {
-          if (v > maxScore) {
-            maxScore = v;
-            topEmotionKey = k;
-          }
-        }
-        currentEmotion = EMOTION_MAP[topEmotionKey] || "😊 Tenang / Neutral";
-        detectedEmotionEl.textContent = currentEmotion;
-        AURA.emotion = topEmotionKey;
-        const bx = detection.detection.box;
-        const vw = videoEl.videoWidth || 640, vh = videoEl.videoHeight || 480;
-        AURA.face = { x: -(((bx.x + bx.width / 2) / vw) * 2 - 1), y: ((bx.y + bx.height / 2) / vh) * 2 - 1, seen: true };
-        cameraStage.classList.add("face-on");
-
-        if (faceMatcher) {
-          const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-          if (bestMatch.label !== "unknown") {
-            const ketepatan = Math.round((1 - bestMatch.distance) * 100);
-            currentIdentity = bestMatch.label;
-            detectedIdentityEl.textContent = `✅ ${bestMatch.label} (${ketepatan}%)`;
-            if (userName !== bestMatch.label) {
-              userName = bestMatch.label;
-              activeUserBadge.textContent = userName;
-            }
-          } else {
-            detectedIdentityEl.textContent = `👤 ${userName} (Wajah Baharu)`;
-          }
-        } else {
-          detectedIdentityEl.textContent = `👤 ${userName} (Belum Rakam Vektor)`;
-        }
-
-        if (!isCameraHidden) {
-          const box = detection.detection.box;
-          ctx.strokeStyle = "rgba(14, 165, 233, 0.9)";
-          ctx.lineWidth = 3;
-          ctx.strokeRect(box.x, box.y, box.width, box.height);
-        }
-      } else {
-        detectedEmotionEl.textContent = "👀 Mencari Wajah...";
-        AURA.face.seen = false;
-        cameraStage.classList.remove("face-on");
-      }
-    }, 900);
-  }
-
-  /********************************************************************
-   * 5. RAKAM & INGAT SETIAP PIXEL WAJAH (128-VEKTOR KE MEMORI & SHEET)
-   ********************************************************************/
-  btnRegisterFace.addEventListener("click", async () => {
-    if (isMicOnlyMode) {
-      alert("Sila matikan 'Guna Mic Sahaja' dahulu untuk mengimbas wajah.");
-      return;
-    }
-    if (!modelsLoaded) {
-      alert("Model AI wajah sedang dimuatkan, tunggu sebentar.");
-      return;
-    }
-
-    btnRegisterFace.disabled = true;
-    const samples = [];
-    const totalSamples = 3;
-
-    for (let i = 1; i <= totalSamples; i++) {
-      faceScanStatus.textContent = `📸 Mengimbas struktur 128-vektor wajah (${i}/${totalSamples})... Pandang kamera.`;
-      await new Promise(r => setTimeout(r, 950));
-
-      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
-      const det = await faceapi
-        .detectSingleFace(videoEl, options)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      if (det && det.descriptor) {
-        samples.push(Array.from(det.descriptor));
-      }
-    }
-
-    if (samples.length === 0) {
-      faceScanStatus.textContent = "⚠️ Wajah tidak jelas. Pastikan pencahayaan mencukupi dan cuba lagi.";
-      btnRegisterFace.disabled = false;
-      return;
-    }
-
-    const existingIdx = faceMemoryList.findIndex(f => f.name.toLowerCase() === userName.toLowerCase());
-    const faceRecord = { name: userName, descriptors: samples };
-    if (existingIdx >= 0) {
-      faceMemoryList[existingIdx] = faceRecord;
-    } else {
-      faceMemoryList.push(faceRecord);
-    }
-    localStorage.setItem("aura_face_memory_v1", JSON.stringify(faceMemoryList));
-    binaSemulaFaceMatcher();
-
-    faceScanStatus.textContent = `✨ Berjaya! Wajah ${userName} telah diingati sepenuhnya dalam memori.`;
-    btnRegisterFace.disabled = false;
-
-    if (GAS_URL && !GAS_URL.includes("MASUKKAN_URL")) {
-      fetch(GAS_URL, {
-        method: "POST",
-        redirect: "follow",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "saveFace",
-          name: userName,
-          descriptors: samples
-        })
-      }).catch(() => {});
-    }
-  });
-
-  /********************************************************************
-   * 6. KAWALAN SEMBUNYI KAMERA & MOD MIKROFON SAHAJA
-   ********************************************************************/
-  function aktifkanPaparanOrb(aktif, teksStatus) {
-    if (aktif) {
-      crystalOrbView.classList.add("active");
-      if (teksStatus) orbStatusLabel.textContent = teksStatus;
-    } else {
-      crystalOrbView.classList.remove("active");
-    }
-  }
-
-  btnHideCam.addEventListener("click", () => {
-    isCameraHidden = !isCameraHidden;
-    if (isCameraHidden) {
-      btnHideCam.classList.add("active-toggle");
-      btnHideCam.textContent = "👁️ Papar Kamera";
-      aktifkanPaparanOrb(true, "Kamera Disembunyikan • AI Sedang Mendengar");
-    } else {
-      btnHideCam.classList.remove("active-toggle");
-      btnHideCam.textContent = "🙈 Sembunyi Kamera";
-      if (!isMicOnlyMode) aktifkanPaparanOrb(false);
-    }
-  });
-
-  btnMicOnlyMode.addEventListener("click", async () => {
-    isMicOnlyMode = !isMicOnlyMode;
-    if (isMicOnlyMode) {
-      btnMicOnlyMode.classList.add("active-toggle");
-      btnMicOnlyMode.textContent = "📷 Hidupkan Kamera";
-      hentikanKameraSepenuhnya();
-      detectedIdentityEl.textContent = "🎙️ " + userName + " (Mod Suara)";
-      detectedEmotionEl.textContent = "🎧 Fokus Suara Sahaja";
-      aktifkanPaparanOrb(true, "Mod Mikrofon Sahaja • Kamera Dimatikan");
-    } else {
-      btnMicOnlyMode.classList.remove("active-toggle");
-      btnMicOnlyMode.textContent = "🎙️ Guna Mic Sahaja";
-      if (!isCameraHidden) aktifkanPaparanOrb(false);
-      await hidupkanKamera();
-    }
-  });
-
-  btnAutoHandsfree.addEventListener("click", () => {
-    isHandsfree = !isHandsfree;
-    btnAutoHandsfree.classList.toggle("active-toggle", isHandsfree);
-    btnAutoHandsfree.textContent = isHandsfree ? "🔄 Dengar Automatik: ON" : "🔄 Dengar Automatik: OFF";
-  });
-
-  btnToggleVoiceOut.addEventListener("click", () => {
-    isVoiceOutputOn = !isVoiceOutputOn;
-    btnToggleVoiceOut.classList.toggle("active-toggle", isVoiceOutputOn);
-    btnToggleVoiceOut.textContent = isVoiceOutputOn ? "🔊 Suara AI: ON" : "🔇 Suara AI: OFF";
-    if (!isVoiceOutputOn && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-  });
-
-  /********************************************************************
-   * 7. INTERAKSI SUARA (SPEECH-TO-TEXT & TEXT-TO-SPEECH KAWAN BAIK)
+   * PENGECAMAN SUARA (Speech-to-Text) DALAM BAHASA SUMBER
    ********************************************************************/
   let recognition = null;
-
-  function sediakanPengiktirafanSuara() {
+  let sudahDihantar = false;
+  (function sediakanPengecaman() {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) return;
-
     recognition = new SpeechRec();
-    recognition.lang = "ms-MY";
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      isListening = true;
-      AURA.listening = true;
+      isListening = true; AURA.listening = true; sudahDihantar = false;
       btnMicTalk.classList.add("listening");
-      orbSphere.classList.add("listening");
-      orbStatusLabel.textContent = "🎙️ Sedang mendengar suara anda...";
+      orbStatusLabel.textContent = `🎙️ Mendengar ${cariBahasa(S.src)[1]}...`;
     };
-
     recognition.onresult = (event) => {
-      const transkrip = event.results[0][0].transcript.trim();
-      if (transkrip) {
+      let sementara = "", akhir = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const r = event.results[i];
+        if (r.isFinal) akhir += r[0].transcript; else sementara += r[0].transcript;
+      }
+      textInput.value = (akhir || sementara).trim();
+      if (akhir.trim() && !sudahDihantar) {
+        sudahDihantar = true;
         AURA.absorbAt = performance.now();
-        textMessageInput.value = transkrip;
-        hantarMesejPengguna(transkrip);
+        terjemah(akhir.trim());
       }
     };
-
-    recognition.onerror = () => {
-      isListening = false;
-      AURA.listening = false;
-      btnMicTalk.classList.remove("listening");
-      orbSphere.classList.remove("listening");
+    recognition.onerror = (e) => {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        gelungAktif = false;
+        toast("Sila benarkan akses mikrofon dalam pelayar.");
+      }
     };
-
     recognition.onend = () => {
-      isListening = false;
-      AURA.listening = false;
+      isListening = false; AURA.listening = false;
       btnMicTalk.classList.remove("listening");
-      orbSphere.classList.remove("listening");
-      if (isHandsfree && !isAiSpeaking) {
-        setTimeout(() => {
-          try { if (!isAiSpeaking && !isListening) recognition.start(); } catch (e) {}
-        }, 600);
+      if (!sudahDihantar && !isBusy && !isSpeaking && S.auto && gelungAktif) {
+        setTimeout(() => mulaDengar(), 500);
       }
     };
+  })();
+
+  function mulaDengar() {
+    if (!recognition || isListening || isSpeaking || isBusy) return;
+    recognition.lang = S.src;
+    try { recognition.start(); } catch (e) {}
   }
 
   btnMicTalk.addEventListener("click", () => {
-    if (!recognition) {
-      alert("Pelayar anda tidak menyokong Web Speech API. Sila gunakan Chrome atau Edge.");
+    if (!recognition) { alert("Pelayar anda tidak menyokong pengecaman suara. Sila gunakan Chrome atau Edge."); return; }
+    if (isListening) {
+      gelungAktif = false;
+      recognition.stop();
       return;
     }
-    if (isListening) {
-      recognition.stop();
-    } else {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-      isAiSpeaking = false;
-      try { recognition.start(); } catch (e) {}
-    }
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    isSpeaking = false; AURA.speaking = false;
+    gelungAktif = true;
+    mulaDengar();
   });
-
-  /* Pilih suara PEREMPUAN Bahasa Melayu (fallback: Indonesia perempuan) */
-  let suaraCache = null;
-  function pilihSuaraPerempuanMelayu() {
-    if (suaraCache) return suaraCache;
-    const v = window.speechSynthesis.getVoices();
-    if (!v.length) return null;
-    const pr = /female|wanita|perempuan|yasmin|amira|gadis|damayanti|siti|nur|google bahasa/i;
-    const lelaki = /male(?!.)|lelaki|osman|ardi|\bmale\b/i;
-    const ms = v.filter(x => /^ms/i.test(x.lang));
-    const id = v.filter(x => /^id/i.test(x.lang));
-    suaraCache =
-      ms.find(x => pr.test(x.name) && !/\bmale\b/i.test(x.name)) ||
-      ms.find(x => !lelaki.test(x.name)) ||
-      id.find(x => pr.test(x.name)) ||
-      id.find(x => !lelaki.test(x.name)) ||
-      ms[0] || id[0] || null;
-    return suaraCache;
-  }
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.onvoiceschanged = () => { suaraCache = null; pilihSuaraPerempuanMelayu(); };
-    window.speechSynthesis.getVoices();
-  }
-
-  function cakapSuaraAI(teks) {
-    if (!isVoiceOutputOn || !("speechSynthesis" in window)) return;
-
-    window.speechSynthesis.cancel();
-    const bersih = teks.replace(/[*#_~`]/g, "");
-    const utterance = new SpeechSynthesisUtterance(bersih);
-
-    const voice = pilihSuaraPerempuanMelayu();
-    if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else { utterance.lang = "ms-MY"; }
-    utterance.rate = 1.0;
-    utterance.pitch = voice && /female|wanita|perempuan|yasmin|amira|gadis|damayanti|zira|siti|nur/i.test(voice.name) ? 1.05 : 1.25;
-
-    utterance.onstart = () => {
-      isAiSpeaking = true;
-      AURA.speaking = true;
-      AURA.wordKick = 1;
-      if (recognition && isListening) {
-        try { recognition.stop(); } catch (e) {}
-      }
-      orbSphere.classList.remove("listening");
-      orbSphere.classList.add("speaking");
-      orbStatusLabel.textContent = "🔊 Sahabat AI sedang bercakap...";
-    };
-
-    utterance.onend = () => {
-      isAiSpeaking = false;
-      AURA.speaking = false;
-      orbSphere.classList.remove("speaking");
-      orbStatusLabel.textContent = "Mod Suara Aktif • Sedia Mendengar";
-      if (isHandsfree && recognition) {
-        setTimeout(() => {
-          try { if (!isListening) recognition.start(); } catch (e) {}
-        }, 400);
-      }
-    };
-
-    utterance.onerror = () => {
-      isAiSpeaking = false;
-      AURA.speaking = false;
-      orbSphere.classList.remove("speaking");
-    };
-
-    // Setiap perkataan yang disebut membuat zarah berdenyut
-    utterance.onboundary = () => { AURA.wordKick = 1; };
-    window.speechSynthesis.speak(utterance);
-  }
 
   /********************************************************************
-   * 8. PENGHANTARAN MESEJ (100% MENGGUNAKAN API KEY DARI SHEET A1)
+   * TERJEMAH (melalui Google Apps Script -> Groq)
    ********************************************************************/
-  btnSendText.addEventListener("click", () => {
-    const teks = textMessageInput.value.trim();
-    if (teks) hantarMesejPengguna(teks);
-  });
+  btnSendText.addEventListener("click", () => { const t = textInput.value.trim(); if (t) terjemah(t); });
+  textInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { const t = textInput.value.trim(); if (t) terjemah(t); } });
 
-  textMessageInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const teks = textMessageInput.value.trim();
-      if (teks) hantarMesejPengguna(teks);
-    }
-  });
+  async function terjemah(teks) {
+    if (isBusy) return;
+    isBusy = true; AURA.thinking = true;
+    textInput.value = "";
+    const dari = labelSumber(), ke = labelSasaran(), kod = kodSuaraSasaran();
+    const w = $("welcomeMsg"); if (w) w.remove();
+    tambahAsal(teks, dari);
 
-  btnClearMemory.addEventListener("click", () => {
-    chatHistory = [];
-    localStorage.removeItem("aura_chat_history_v1");
-    chatStream.innerHTML = "";
-  });
-
-  async function hantarMesejPengguna(mesej) {
-    textMessageInput.value = "";
-    const labelEmosiSemasa = isMicOnlyMode ? "Mod Mikrofon Sahaja" : currentEmotion;
-    tambahMesejKeSkrin("user", mesej, labelEmosiSemasa);
-
-    const modKameraLabel = isMicOnlyMode
-      ? "Dimatikan (Berbual Guna Mikrofon Sahaja)"
-      : (isCameraHidden ? "Kamera Disembunyikan" : "Kamera Aktif");
-
-    AURA.thinking = true;
     try {
       const res = await fetch(GAS_URL, {
         method: "POST",
         redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
-          action: "chat",
-          name: userName,
-          emotion: labelEmosiSemasa,
-          cameraMode: modKameraLabel,
-          message: mesej,
-          history: chatHistory.slice(-8)
+          action: "translate",
+          text: teks,
+          source: namaSumber(),
+          target: namaSasaran(),
+          style: S.style,
+          romanize: S.roman,
+          context: sejarah.filter(h => h.from === dari && h.to === ke).slice(-4).map(h => ({ src: h.src, tgt: h.tgt }))
         })
       });
-
       const data = await res.json();
-      if (data.status !== "success" || !data.reply) {
-        throw new Error(data.message || "Gagal memproses respons dari Google Sheet A1.");
-      }
+      if (data.status !== "success" || !data.translation) throw new Error(data.message || "Gagal menterjemah.");
 
-      const balasan = data.reply;
-      AURA.thinking = false;
-      AURA.nodAt = performance.now();
-
-      chatHistory.push({ role: "user", content: mesej });
-      chatHistory.push({ role: "assistant", content: balasan });
-      if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-      localStorage.setItem("aura_chat_history_v1", JSON.stringify(chatHistory));
-
+      AURA.thinking = false; AURA.nodAt = performance.now();
       aiDot.className = "dot-ind online";
-      tambahMesejKeSkrin("ai", balasan, labelEmosiSemasa);
-      cakapSuaraAI(balasan);
+      const item = { src: teks, tgt: data.translation, roman: S.roman ? (data.romanization || "") : "", from: dari, to: ke, code: kod, t: Date.now() };
+      sejarah.push(item); simpanSejarah();
+      tambahTerjemahan(item);
+      isBusy = false;
+      cakap(data.translation, kod);
     } catch (err) {
-      AURA.thinking = false;
+      AURA.thinking = false; isBusy = false;
       aiDot.className = "dot-ind error";
-      tambahMesejKeSkrin("ai", `⚠️ Ralat: ${err.message}`);
+      tambahRalat(`⚠️ ${err.message}`);
+      gelungAktif = false;
     }
   }
 
-  function tambahMesejKeSkrin(pengirim, teks, infoEmosi = "") {
+  /********************************************************************
+   * PAPARAN MESEJ
+   ********************************************************************/
+  const masaKini = (t) => new Date(t || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
+
+  function tambahAsal(teks, dari, t) {
     const div = document.createElement("div");
-    div.className = `msg-bubble ${pengirim === "user" ? "msg-user" : "msg-ai"}`;
-
-    const p = document.createElement("div");
-    p.textContent = teks;
-    div.appendChild(p);
-
-    const meta = document.createElement("div");
-    meta.className = "msg-meta";
-    const masa = new Date().toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
-    meta.textContent = pengirim === "user"
-      ? `${userName} • ${masa} ${infoEmosi ? "• " + infoEmosi : ""}`
-      : `AURA Sahabat AI • ${masa}`;
-    div.appendChild(meta);
-
-    chatStream.appendChild(div);
-    chatStream.scrollTop = chatStream.scrollHeight;
+    div.className = "msg-bubble msg-user";
+    const p = document.createElement("div"); p.textContent = teks; div.appendChild(p);
+    const m = document.createElement("div"); m.className = "msg-meta"; m.textContent = `${dari} • ${masaKini(t)}`; div.appendChild(m);
+    chatStream.appendChild(div); chatStream.scrollTop = chatStream.scrollHeight;
   }
+
+  function tambahTerjemahan(item) {
+    const div = document.createElement("div");
+    div.className = "msg-bubble msg-ai";
+    const p = document.createElement("div"); p.className = "msg-translation"; p.textContent = item.tgt; div.appendChild(p);
+    if (item.roman) { const r = document.createElement("div"); r.className = "msg-roman"; r.textContent = item.roman; div.appendChild(r); }
+    const m = document.createElement("div"); m.className = "msg-meta"; m.textContent = `${item.to} • ${masaKini(item.t)}`; div.appendChild(m);
+
+    const act = document.createElement("div"); act.className = "msg-actions";
+    const bDengar = document.createElement("button"); bDengar.textContent = "🔊 Dengar";
+    bDengar.onclick = () => cakap(item.tgt, item.code, true);
+    const bSalin = document.createElement("button"); bSalin.textContent = "📋 Salin";
+    bSalin.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(item.tgt).then(() => toast("Disalin ✓")); };
+    act.appendChild(bDengar); act.appendChild(bSalin); div.appendChild(act);
+
+    chatStream.appendChild(div); chatStream.scrollTop = chatStream.scrollHeight;
+  }
+
+  function tambahRalat(teks) {
+    const div = document.createElement("div");
+    div.className = "msg-bubble msg-error"; div.textContent = teks;
+    chatStream.appendChild(div); chatStream.scrollTop = chatStream.scrollHeight;
+  }
+
+  function paparSejarah() {
+    chatStream.innerHTML = "";
+    sejarah.slice(-20).forEach(h => { tambahAsal(h.src, h.from, h.t); tambahTerjemahan(h); });
+  }
+
+  $("btnClear").addEventListener("click", () => { sejarah = []; simpanSejarah(); chatStream.innerHTML = ""; toast("Sejarah dibersihkan"); });
 
   /********************************************************************
-   * 9. LACI TETAPAN (butang lain disembunyikan) & KAMERA KECIL
+   * SAMBUNGAN & UJI API KEY
    ********************************************************************/
-  const settingsDrawer = document.getElementById("settingsDrawer");
-  const drawerBackdrop = document.getElementById("drawerBackdrop");
-  function bukaLaci(buka) {
-    settingsDrawer.classList.toggle("open", buka);
-    drawerBackdrop.classList.toggle("open", buka);
+  async function semakSambungan() {
+    if (!GAS_URL || GAS_URL.includes("MASUKKAN_URL")) { aiStatusText.textContent = "Semak Baris Ke-5 (GAS_URL)"; aiDot.className = "dot-ind error"; return; }
+    try {
+      const res = await fetch(`${GAS_URL}?action=getConfig&t=${Date.now()}`, { method: "GET", redirect: "follow" });
+      const data = await res.json();
+      if (data.status === "success") { aiStatusText.textContent = `Sedia (${data.maskedKey})`; aiDot.className = "dot-ind online"; }
+      else { aiStatusText.textContent = "Semak Sheet A1"; aiDot.className = "dot-ind error"; }
+    } catch (e) { aiStatusText.textContent = "Tiada sambungan"; aiDot.className = "dot-ind error"; }
   }
-  document.getElementById("btnOpenSettings").addEventListener("click", () => bukaLaci(true));
-  document.getElementById("btnCloseSettings").addEventListener("click", () => bukaLaci(false));
-  drawerBackdrop.addEventListener("click", () => bukaLaci(false));
-  btnChangeName.addEventListener("click", () => bukaLaci(false));
-  cameraStage.addEventListener("click", () => cameraStage.classList.toggle("expanded"));
 
-  // Salin status sambungan ke titik kecil pada butang tetapan
+  $("btnTestSheetKey").addEventListener("click", async () => {
+    const box = $("sheetKeyTestBox"), btn = $("btnTestSheetKey");
+    box.style.display = "block"; box.className = "api-test-result-box";
+    box.innerHTML = "⏳ Sedang menyemak kunci API di Google Sheet (tab <b>apikey</b> sel <b>A1</b>)...";
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${GAS_URL}?action=testKey&t=${Date.now()}`, { method: "GET", redirect: "follow" });
+      const data = await res.json();
+      if (data.alive) {
+        box.className = "api-test-result-box alive";
+        box.innerHTML = `✅ <b>API KEY HIDUP!</b><br>• Kunci: <code>${data.maskedKey}</code> (${data.keyLength} aksara)<br>• Kelajuan: <b>${data.latencyMs} ms</b><br>• Model: <b>${data.model || "-"}</b>`;
+        aiDot.className = "dot-ind online"; aiStatusText.textContent = `Sedia (${data.latencyMs}ms)`;
+      } else {
+        box.className = "api-test-result-box dead";
+        box.innerHTML = `❌ <b>MASALAH KUNCI:</b><br>• Kunci: <code>${data.maskedKey || "Tiada"}</code><br>• Ralat: ${data.message}<br><i>Jika baru menukar Code.gs, klik Deploy &gt; Manage deployments &gt; Edit &gt; New version.</i>`;
+        aiDot.className = "dot-ind error"; aiStatusText.textContent = "Ralat Kunci A1";
+      }
+    } catch (err) {
+      box.className = "api-test-result-box dead";
+      box.innerHTML = `❌ <b>GAGAL MENGHUBUNGI APPS SCRIPT:</b><br>${err.message}`;
+      aiDot.className = "dot-ind error";
+    }
+    btn.disabled = false;
+  });
+
+  /********************************************************************
+   * LACI TETAPAN & PERMULAAN
+   ********************************************************************/
+  const settingsDrawer = $("settingsDrawer"), drawerBackdrop = $("drawerBackdrop");
+  function bukaLaci(buka) { settingsDrawer.classList.toggle("open", buka); drawerBackdrop.classList.toggle("open", buka); }
+  $("btnOpenSettings").addEventListener("click", () => bukaLaci(true));
+  $("topDirection").addEventListener("click", () => bukaLaci(true));
+  $("btnCloseSettings").addEventListener("click", () => bukaLaci(false));
+  drawerBackdrop.addEventListener("click", () => bukaLaci(false));
+
   new MutationObserver(() => { miniDot.className = "status-dot-mini " + aiDot.className.replace("dot-ind", "").trim(); })
     .observe(aiDot, { attributes: true, attributeFilter: ["class"] });
 
-  function paparSejarahBorak() {
-    chatStream.innerHTML = "";
-    chatHistory.forEach(item => {
-      tambahMesejKeSkrin(item.role === "user" ? "user" : "ai", item.content);
-    });
-  }
+  window.addEventListener("DOMContentLoaded", () => {
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+    paparTetapan();
+    paparSejarah();
+    semakSambungan();
+    if (!sejarah.length) {
+      const d = document.createElement("div");
+      d.className = "msg-bubble msg-ai"; d.id = "welcomeMsg";
+      d.textContent = "Hai! Tekan butang 🎤 dan cakap dalam Bahasa Melayu. Saya akan terjemah dan bacakan dalam bahasa pilihan anda. Tukar bahasa di bawah atau dalam ⚙️ Tetapan.";
+      chatStream.appendChild(d);
+    }
+  });
 </script>
 
 <script>
@@ -1166,7 +936,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbzuEGQOifhmzkPfkk9AwPxF
     ctx.globalCompositeOperation = "source-over";
 
     // Label status lembut
-    const want = A.listening ? "🎙️ Saya sedang dengar..." : A.thinking ? "💭 Saya faham, sedang berfikir..." : A.speaking ? "" : "Sedia mendengar";
+    const want = A.listening ? "🎙️ Sedang mendengar..." : A.thinking ? "💭 Sedang menterjemah..." : A.speaking ? "" : "Tekan 🎤 dan mula bercakap";
     if (want !== lastLabel && label) {
       lastLabel = want;
       if (want) label.textContent = want;

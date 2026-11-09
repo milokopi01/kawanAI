@@ -1,32 +1,27 @@
 /**
- * TEMAN AI PINTAR 3D - BACKEND GOOGLE APPS SCRIPT (Code.gs)
- * Membaca API Key Groq dari Helaian 'apikey' Sel A1
- * Menyimpan Memori Vektor Wajah (128-Descriptor) & Memori Perbualan
+ * AURA TERJEMAH — BACKEND GOOGLE APPS SCRIPT (Code.gs)
+ * Penterjemah suara masa nyata: cakap dalam Bahasa Melayu (atau bahasa lain),
+ * diterjemah ke mana-mana bahasa dunia menggunakan Groq.
+ * Membaca API Key Groq dari Helaian 'apikey' Sel A1 (model pilihan: Sel B1).
+ * Merekod setiap terjemahan ke helaian 'LogTerjemahan'.
  */
 
 const SHEET_ID = "1caFK4WZ7fKk32-j4CXS7t22JGA9K806nLjHDXW2DKOg";
-const FOLDER_ID = "18u5mjkdNw1LTZ7jGZ6K23FTqbNLChwja";
 
 // Jalankan fungsi ini sekali di editor Apps Script untuk cipta tab automatik jika belum wujud
 function setupAwal() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  
+
   let sheetKey = ss.getSheetByName("apikey");
   if (!sheetKey) {
     sheetKey = ss.insertSheet("apikey");
     sheetKey.getRange("A1").setValue("MASUKKAN_API_KEY_GROQ_DISINI");
   }
-  
-  let sheetWajah = ss.getSheetByName("MemoriWajah");
-  if (!sheetWajah) {
-    sheetWajah = ss.insertSheet("MemoriWajah");
-    sheetWajah.appendRow(["Masa Daftar", "Nama Pengguna", "Vektor Wajah (128-Float JSON)"]);
-  }
-  
-  let sheetLog = ss.getSheetByName("LogMemori");
+
+  let sheetLog = ss.getSheetByName("LogTerjemahan");
   if (!sheetLog) {
-    sheetLog = ss.insertSheet("LogMemori");
-    sheetLog.appendRow(["Masa", "Nama", "Emosi Wajah", "Mod Kamera", "Mesej Pengguna", "Jawapan AI"]);
+    sheetLog = ss.insertSheet("LogTerjemahan");
+    sheetLog.appendRow(["Masa", "Dari Bahasa", "Ke Bahasa", "Gaya", "Teks Asal", "Terjemahan", "Sebutan", "Model"]);
   }
 }
 
@@ -46,18 +41,17 @@ function ambilApiKeyGroq() {
 
 /* =====================================================================
  * PEMILIHAN MODEL GROQ AUTOMATIK
- * Groq kerap menukar / menamatkan model. Kod ini membaca senarai model
- * yang BENAR-BENAR tersedia untuk kunci anda, dan memilih yang terbaik.
+ * Kod ini membaca senarai model yang BENAR-BENAR tersedia untuk kunci anda.
  * Mahu paksa model tertentu? Tulis nama model dalam tab 'apikey' sel B1.
  * ===================================================================== */
 const MODEL_PILIHAN = [
-  "openai/gpt-oss-120b",
   "llama-3.3-70b-versatile",
-  "meta-llama/llama-4-maverick-17b-128e-instruct",
+  "openai/gpt-oss-120b",
   "moonshotai/kimi-k2-instruct-0905",
+  "meta-llama/llama-4-maverick-17b-128e-instruct",
   "meta-llama/llama-4-scout-17b-16e-instruct",
-  "openai/gpt-oss-20b",
   "qwen/qwen3-32b",
+  "openai/gpt-oss-20b",
   "llama-3.1-8b-instant"
 ];
 
@@ -90,7 +84,6 @@ function modelManualDariSheet() {
   } catch (e) { return ""; }
 }
 
-// Pulangkan senarai model untuk dicuba mengikut keutamaan
 function susunCalonModel(apiKey, segarkan) {
   const ada = senaraiModelGroq(apiKey, segarkan);
   const manual = modelManualDariSheet();
@@ -101,21 +94,27 @@ function susunCalonModel(apiKey, segarkan) {
   return calon;
 }
 
-function bersihkanJawapan(t) {
+function bersihkanOutput(t) {
   return String(t || "")
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
-    .replace(/[*#`]/g, "")
+    .replace(/```(?:json)?/gi, "")
     .trim();
 }
 
-function panggilGroqChat(apiKey, messagesPayload) {
+function panggilGroq(apiKey, messagesPayload, opsyen) {
+  opsyen = opsyen || {};
   let calon = susunCalonModel(apiKey, false);
   let ralatAkhir = "Tiada model chat tersedia untuk kunci API ini.";
   let dahSegar = false;
 
   for (let i = 0; i < calon.length && i < 5; i++) {
     const model = calon[i];
-    const body = { model: model, messages: messagesPayload, temperature: 0.72, max_tokens: 700 };
+    const body = {
+      model: model,
+      messages: messagesPayload,
+      temperature: opsyen.temperature != null ? opsyen.temperature : 0.2,
+      max_tokens: opsyen.max_tokens || 1200
+    };
     if (/^openai\/gpt-oss/i.test(model)) body.reasoning_effort = "low";
     if (/qwen3/i.test(model)) body.reasoning_format = "hidden";
 
@@ -130,14 +129,13 @@ function panggilGroqChat(apiKey, messagesPayload) {
     try { json = JSON.parse(res.getContentText()); } catch (e) { json = { error: { message: "HTTP " + res.getResponseCode() } }; }
 
     if (!json.error && json.choices && json.choices[0]) {
-      const teks = bersihkanJawapan(json.choices[0].message && json.choices[0].message.content);
+      const teks = bersihkanOutput(json.choices[0].message && json.choices[0].message.content);
       if (teks) return { reply: teks, model: model };
       ralatAkhir = "Model " + model + " memulangkan jawapan kosong.";
       continue;
     }
 
     ralatAkhir = (json.error && json.error.message) || ("HTTP " + res.getResponseCode());
-    // Ralat berkaitan model -> cuba model seterusnya (segarkan senarai sekali)
     if (/model|decommission|not exist|not found|access|deprecat/i.test(ralatAkhir)) {
       if (!dahSegar) {
         dahSegar = true;
@@ -146,19 +144,67 @@ function panggilGroqChat(apiKey, messagesPayload) {
       }
       continue;
     }
-    // Ralat lain (had kadar, kunci salah) -> berhenti
-    break;
+    break; // had kadar / kunci salah -> berhenti
   }
   throw new Error(ralatAkhir);
 }
 
-function doGet(e) {
-  return prosesPermintaan(e);
+/* =====================================================================
+ * ENJIN TERJEMAHAN
+ * ===================================================================== */
+const GAYA_TERJEMAHAN = {
+  biasa: "natural, neutral everyday spoken",
+  formal: "formal and polite (suitable for business, officials or elders)",
+  santai: "casual and friendly (like talking to a friend)"
+};
+
+function terjemahTeks(apiKey, teks, sumber, sasaran, gaya, romanize, konteks) {
+  const register = GAYA_TERJEMAHAN[gaya] || GAYA_TERJEMAHAN.biasa;
+
+  const systemPrompt = `You are a professional real-time speech interpreter.
+Translate every user message from ${sumber} into ${sasaran}.
+
+Rules:
+1. The input comes from speech-to-text, so it may lack punctuation, contain slang, Malaysian colloquial words (e.g. "tak", "nak", "dah", "lah", "kot", "ke", "je", "camne", "boleh tak"), mixed English words, or small recognition mistakes. Understand the intended meaning first, then translate it faithfully.
+2. Use a ${register} register in ${sasaran}. The result will be read aloud by a text-to-speech voice, so write it as natural speech with correct punctuation.
+3. Keep names, numbers, dates, prices and places accurate. Never add explanations, notes, alternatives or quotation marks.
+4. If the message is a question, keep it a question. If it is already in ${sasaran}, just return it cleaned up.
+5. Reply ONLY with one JSON object and nothing else:
+{"translation": "<the ${sasaran} translation>", "romanization": "<${romanize
+    ? `Latin-alphabet pronunciation guide of the translation ONLY if ${sasaran} uses a non-Latin script (e.g. pinyin with tones, romaji, romanized Arabic/Thai/Hindi/Korean). Otherwise an empty string`
+    : "always an empty string"}>"}`;
+
+  const messages = [{ role: "system", content: systemPrompt }];
+  (konteks || []).slice(-4).forEach(k => {
+    if (k && k.src && k.tgt) {
+      messages.push({ role: "user", content: String(k.src) });
+      messages.push({ role: "assistant", content: JSON.stringify({ translation: String(k.tgt), romanization: "" }) });
+    }
+  });
+  messages.push({ role: "user", content: teks });
+
+  const hasil = panggilGroq(apiKey, messages, { temperature: 0.2, max_tokens: 1200 });
+
+  let terjemahan = "", sebutan = "";
+  const padanan = hasil.reply.match(/\{[\s\S]*\}/);
+  if (padanan) {
+    try {
+      const obj = JSON.parse(padanan[0]);
+      terjemahan = String(obj.translation || "").trim();
+      sebutan = String(obj.romanization || "").trim();
+    } catch (e) {}
+  }
+  if (!terjemahan) terjemahan = hasil.reply.replace(/^["']|["']$/g, "").trim();
+  if (sebutan && sebutan.toLowerCase() === terjemahan.toLowerCase()) sebutan = "";
+
+  return { translation: terjemahan, romanization: sebutan, model: hasil.model };
 }
 
-function doPost(e) {
-  return prosesPermintaan(e);
-}
+/* =====================================================================
+ * PINTU MASUK WEB APP
+ * ===================================================================== */
+function doGet(e) { return prosesPermintaan(e); }
+function doPost(e) { return prosesPermintaan(e); }
 
 function prosesPermintaan(e) {
   try {
@@ -171,7 +217,7 @@ function prosesPermintaan(e) {
 
     const action = params.action || "getConfig";
 
-    // 0. Uji kunci API dalam Sheet (tab 'apikey' sel A1) terus ke Groq
+    // 0. Uji kunci API dalam Sheet (tab 'apikey' sel A1)
     if (action === "testKey") {
       let apiKey = "";
       try { apiKey = ambilApiKeyGroq(); } catch (kErr) {
@@ -197,134 +243,44 @@ function prosesPermintaan(e) {
       });
     }
 
-    // 1. Ambil konfigurasi & senarai memori wajah yang pernah disimpan
+    // 1. Semak sambungan
     if (action === "getConfig") {
       const apiKey = ambilApiKeyGroq();
-      const ss = SpreadsheetApp.openById(SHEET_ID);
-      let sheetWajah = ss.getSheetByName("MemoriWajah");
-      let senaraiWajah = [];
-
-      if (sheetWajah && sheetWajah.getLastRow() > 1) {
-        const data = sheetWajah.getRange(2, 1, sheetWajah.getLastRow() - 1, 3).getValues();
-        data.forEach(row => {
-          if (row[1] && row[2]) {
-            try {
-              senaraiWajah.push({
-                name: String(row[1]),
-                descriptors: JSON.parse(row[2])
-              });
-            } catch (err) {}
-          }
-        });
-      }
-
-      return responJSON({
-        status: "success",
-        maskedKey: topengKunci(apiKey),
-        faces: senaraiWajah
-      });
+      return responJSON({ status: "success", maskedKey: topengKunci(apiKey) });
     }
 
-    // 2. Simpan memori vektor wajah pengguna ke Google Sheet & salinan JSON ke Google Drive
-    if (action === "saveFace") {
-      const ss = SpreadsheetApp.openById(SHEET_ID);
-      let sheetWajah = ss.getSheetByName("MemoriWajah");
-      if (!sheetWajah) {
-        setupAwal();
-        sheetWajah = ss.getSheetByName("MemoriWajah");
-      }
-
-      const nama = params.name || "Pengguna";
-      const descriptorsJson = JSON.stringify(params.descriptors || []);
-      const masa = new Date();
-
-      // Kemas kini jika nama sudah wujud atau tambah baris baharu
-      const lastRow = sheetWajah.getLastRow();
-      let dikemaskini = false;
-      if (lastRow > 1) {
-        const data = sheetWajah.getRange(2, 1, lastRow - 1, 3).getValues();
-        for (let i = 0; i < data.length; i++) {
-          if (String(data[i][1]).toLowerCase() === nama.toLowerCase()) {
-            sheetWajah.getRange(i + 2, 1, 1, 3).setValues([[masa, nama, descriptorsJson]]);
-            dikemaskini = true;
-            break;
-          }
-        }
-      }
-      if (!dikemaskini) {
-        sheetWajah.appendRow([masa, nama, descriptorsJson]);
-      }
-
-      // Simpan fail sandaran profil wajah ke dalam Google Drive Folder
-      try {
-        const folder = DriveApp.getFolderById(FOLDER_ID);
-        const namaFail = "MemoriWajah_" + nama.replace(/[^a-zA-Z0-9]/g, "_") + ".json";
-        const files = folder.getFilesByName(namaFail);
-        const kandunganFail = JSON.stringify({
-          name: nama,
-          updatedAt: masa.toISOString(),
-          descriptors: params.descriptors
-        }, null, 2);
-
-        if (files.hasNext()) {
-          files.next().setContent(kandunganFail);
-        } else {
-          folder.createFile(namaFail, kandunganFail, MimeType.PLAIN_TEXT);
-        }
-      } catch (driveErr) {}
-
-      return responJSON({ status: "success", message: "Memori wajah disimpan." });
-    }
-
-    // 3. Panggilan terus ke Groq melalui pelayan Apps Script & simpan log memori
-    if (action === "chat") {
+    // 2. Terjemah teks / ucapan
+    if (action === "translate") {
       const apiKey = ambilApiKeyGroq();
-      const nama = params.name || "Sahabat";
-      const emosi = params.emotion || "Neutral / Tenang";
-      const modKamera = params.cameraMode || "Aktif";
-      const mesej = params.message || "";
-      let sejarah = params.history || [];
-      if (typeof sejarah === "string") { try { sejarah = JSON.parse(sejarah); } catch (h) { sejarah = []; } }
-      sejarah = (Array.isArray(sejarah) ? sejarah : []).filter(m => m && m.role && m.content);
+      const teks = String(params.text || "").trim();
+      if (!teks) return responJSON({ status: "error", message: "Tiada teks untuk diterjemah." });
 
-      const systemPrompt = `Anda ialah sahabat karib (kawan baik) dan AI serba tahu kepada ${nama}.
-Anda bercakap dalam Bahasa Melayu Malaysia yang sangat natural, santai, mesra, empati, dan bijaksana seperti manusia sebenar.
-Maklumat deria semasa:
-- Nama di hadapan anda: ${nama}
-- Mod Kamera: ${modKamera}
-- Riak / Emosi Wajah Semasa: ${emosi}
-
-Peraturan Penting:
-1. Jika kamera aktif, sesuaikan nada perbualan secara semula jadi dengan emosi wajah ${nama} tanpa menyebut secara kaku "kamera saya mengesan wajah anda". Jika kamera disembunyikan/ditutup (Mod Suara Sahaja), fokus sepenuhnya pada intonasi dan topik perbualan.
-2. Anda serba tahu dalam semua bidang (sains, pendidikan, sukan, pembaikan, koding, agama, kehidupan harian).
-3. Jawab dengan padat, hidup, dan mesra (sekitar 1 hingga 4 ayat sahaja) supaya sangat sedap didengar apabila dibacakan melalui suara (Text-to-Speech). Jawapan mesti teks biasa sahaja kerana ia akan dibacakan dengan suara perempuan Melayu. Jangan gunakan emoji atau simbol markdown seperti bintang (*) atau tanda pagar (#) kerana jawapan akan dibaca terus oleh enjin suara.`;
-
-      const messagesPayload = [
-        { role: "system", content: systemPrompt },
-        ...sejarah.slice(-8),
-        { role: "user", content: mesej }
-      ];
+      const sumber = String(params.source || "Malay");
+      const sasaran = String(params.target || "English");
+      const gaya = String(params.style || "biasa");
+      const romanize = params.romanize === true || params.romanize === "true";
+      let konteks = params.context || [];
+      if (typeof konteks === "string") { try { konteks = JSON.parse(konteks); } catch (c) { konteks = []; } }
+      if (!Array.isArray(konteks)) konteks = [];
 
       let hasil;
       try {
-        hasil = panggilGroqChat(apiKey, messagesPayload);
+        hasil = terjemahTeks(apiKey, teks, sumber, sasaran, gaya, romanize, konteks);
       } catch (gErr) {
         return responJSON({ status: "error", message: gErr.message });
       }
-      const jawapanAI = hasil.reply;
 
-      // Rekod ke dalam helaian LogMemori
       try {
         const ss = SpreadsheetApp.openById(SHEET_ID);
-        let sheetLog = ss.getSheetByName("LogMemori");
-        if (sheetLog) {
-          sheetLog.appendRow([new Date(), nama, emosi, modKamera, mesej, jawapanAI]);
-        }
+        let sheetLog = ss.getSheetByName("LogTerjemahan");
+        if (!sheetLog) { setupAwal(); sheetLog = ss.getSheetByName("LogTerjemahan"); }
+        sheetLog.appendRow([new Date(), sumber, sasaran, gaya, teks, hasil.translation, hasil.romanization, hasil.model]);
       } catch (logErr) {}
 
       return responJSON({
         status: "success",
-        reply: jawapanAI,
+        translation: hasil.translation,
+        romanization: hasil.romanization,
         model: hasil.model
       });
     }

@@ -1,12 +1,13 @@
 {
-  "name": "AURA 3D — Sahabat AI & Pengesan Wajah Pintar",
-  "short_name": "AURA 3D",
-  "description": "Aplikasi PWA Sahabat AI Serba Tahu dengan Memori Wajah 128-Vektor, Pengesan Emosi dan Mod Suara Kawan Baik.",
+  "name": "AURA Terjemah — Penterjemah Suara Seluruh Dunia",
+  "short_name": "AURA Terjemah",
+  "description": "Cakap dalam Bahasa Melayu dan dengar terjemahannya serta-merta dalam lebih 80 bahasa dunia.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#02060c",
   "theme_color": "#02060c",
   "orientation": "portrait-primary",
+  "lang": "ms",
   "icons": [
     {
       "src": "icon.png",
