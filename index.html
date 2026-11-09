@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDemwKIxmC2v11vTzR6gcNS0dYX5eS2X-ZhemuaVzVAfMipd/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -28,11 +28,35 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   body{background:radial-gradient(ellipse at 50% 32%,#06202e 0%,#030a12 55%,#010307 100%);overscroll-behavior:none}
 
   /* Kanvas zarah memenuhi seluruh skrin */
-  #auraParticles{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:block}
+  #auraParticles{position:fixed;inset:0;width:100vw;height:100vh;z-index:1;pointer-events:none;display:block}
+
+  /* ===== MOD LIVE AR: zarah hidup di dalam kamera live ===== */
+  #liveCam{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:0;display:none;background:#000;pointer-events:none}
+  #liveCam.cermin{transform:scaleX(-1)}
+  #liveShade{position:fixed;inset:0;z-index:0;pointer-events:none;display:none;
+    background:linear-gradient(to bottom,rgba(1,4,9,.45) 0,rgba(1,4,9,0) 20%,rgba(1,4,9,0) 55%,rgba(1,4,9,.6) 100%)}
+  body.live{background:#000}
+  body.live #liveCam,body.live #liveShade{display:block}
+  .live-ctrl{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:20;display:none;flex-direction:column;gap:8px}
+  body.live .live-ctrl{display:flex}
+  .live-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line-strong);cursor:pointer;font-size:1rem;
+    background:rgba(8,22,34,.55);color:var(--ink);display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .live-hint{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:21;
+    max-width:88vw;padding:9px 14px;border-radius:999px;font-size:.76rem;font-weight:700;text-align:center;
+    background:rgba(8,22,34,.7);border:1px solid var(--line-strong);color:var(--ink);pointer-events:none;
+    opacity:0;transition:opacity .5s ease;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .live-hint.show{opacity:1}
+  .camera-stage.live-on{border-color:rgba(244,63,94,.85);box-shadow:0 0 18px rgba(244,63,94,.5)}
+  .camera-stage .live-tag{position:absolute;left:4px;bottom:4px;z-index:4;font-size:.5rem;font-weight:800;letter-spacing:.4px;
+    padding:2px 5px;border-radius:6px;background:rgba(2,6,12,.7);color:#e6f6ff;pointer-events:none}
+  .camera-stage.live-on .live-tag{background:var(--rose)}
+  body{touch-action:none}
+  .chat-stream,.settings-drawer{touch-action:pan-y}
 
   /* Label status halus di bawah aura */
   .orb-status-label{
-    position:fixed;left:50%;top:var(--label-top,54vh);transform:translateX(-50%);
+    position:fixed;left:var(--label-left,50%);top:var(--label-top,54vh);transform:translateX(-50%);
     z-index:2;font-size:.78rem;font-weight:600;letter-spacing:.3px;color:rgba(200,240,255,.72);
     text-shadow:0 0 12px rgba(34,211,238,.45);white-space:nowrap;pointer-events:none;
     transition:opacity .4s ease;
@@ -160,7 +184,17 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
 </head>
 <body>
 
+<video id="liveCam" autoplay muted playsinline></video>
+<div id="liveShade"></div>
 <canvas id="auraParticles"></canvas>
+
+<!-- Kawalan Mod Live AR -->
+<div class="live-ctrl">
+  <button id="btnKeluarLive" class="live-btn" aria-label="Keluar mod live" title="Keluar mod live">✕</button>
+  <button id="btnTukarKamera" class="live-btn" aria-label="Tukar kamera depan / belakang" title="Tukar kamera depan / belakang">🔄</button>
+  <button id="btnResetPosisi" class="live-btn" aria-label="Kembalikan ke tengah" title="Kembalikan ke tengah">🎯</button>
+</div>
+<div id="liveHint" class="live-hint"></div>
 <div id="orbStatusLabel" class="orb-status-label">Sedia mendengar</div>
 
 <!-- Butang tetapan halus (butang lain disembunyikan di dalam laci) -->
@@ -228,6 +262,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
 
   <div id="faceScanStatus" class="scan-progress"></div>
 
+  <button id="btnLiveMode" class="btn-3d primary-3d">✨ Mod Live: Bawa Aura Masuk Kamera</button>
   <button id="btnRegisterFace" class="btn-3d primary-3d">📸 Rakam & Ingat Wajah Saya (3 Saat)</button>
 
   <div class="btn-row">
@@ -257,10 +292,11 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   <div id="chatStream" class="chat-stream"></div>
 
   <div class="chat-input-bar">
-    <div id="cameraStage" class="camera-stage" title="Tekan untuk besarkan / kecilkan kamera">
+    <div id="cameraStage" class="camera-stage" title="Tekan untuk masuk / keluar Mod Live (Aura dalam kamera)">
       <video id="webcam" autoplay muted playsinline></video>
       <canvas id="overlay"></canvas>
       <div id="crystalOrbView" class="crystal-orb-container"><span id="orbSphere">🎙️</span></div>
+      <span class="live-tag">LIVE</span>
     </div>
     <button id="btnMicTalk" class="mic-fab" title="Tekan untuk bercakap">🎤</button>
     <input type="text" id="textMessageInput" class="chat-text-input" placeholder="Cakap atau taip di sini..." autocomplete="off">
@@ -275,7 +311,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
   let userName = localStorage.getItem("aura_user_name") || "";
   let aiName = localStorage.getItem("aura_ai_name") || "Aura";
-  let bolehPotong = true; localStorage.setItem("aura_barge_in","on");
+  let bolehPotong = localStorage.getItem("aura_barge_in") !== "off";
   let faceMemoryList = JSON.parse(localStorage.getItem("aura_face_memory_v1") || "[]");
   let chatHistory = JSON.parse(localStorage.getItem("aura_chat_history_v1") || "[]");
 
@@ -301,8 +337,11 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   window.AURA = {
     listening: false, speaking: false, thinking: false,
     emotion: "neutral", face: { x: 0, y: 0, seen: false },
-    wordKick: 0, nodAt: 0, absorbAt: 0, pokeAt: 0
+    wordKick: 0, nodAt: 0, absorbAt: 0, pokeAt: 0,
+    live: false, mirror: true, grabAt: 0, dropAt: 0
   };
+  let arahKamera = "user";   // "user" = kamera depan, "environment" = kamera belakang
+  let modLive = false;
   const AURA = window.AURA;
 
   const EMOTION_MAP = {
@@ -328,6 +367,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   const aiStatusText = document.getElementById("aiStatusText");
 
   const videoEl = document.getElementById("webcam");
+  const liveCam = document.getElementById("liveCam");
   const cameraStage = document.getElementById("cameraStage");
   const miniDot = document.getElementById("miniDot");
   const canvasEl = document.getElementById("overlay");
@@ -424,6 +464,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
       await hidupkanKamera();
     }
     sediakanPengiktirafanSuara();
+    if (localStorage.getItem("aura_live") === "on" && webcamStream) setLive(true);
 
     if (chatHistory.length === 0) {
       const sapaan = `Hai ${userName}! Saya ${aiName}. Jom borak, cakap je apa-apa dengan saya.`;
@@ -542,11 +583,18 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
     if (isMicOnlyMode) return;
     try {
       webcamStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: { ideal: arahKamera }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
       });
+      const cermin = arahKamera === "user";
+      AURA.mirror = cermin;
+      videoEl.style.transform = cermin ? "scaleX(-1)" : "none";
+      canvasEl.style.transform = cermin ? "scaleX(-1)" : "none";
+      liveCam.classList.toggle("cermin", cermin);
       videoEl.srcObject = webcamStream;
+      liveCam.srcObject = webcamStream;
       await videoEl.play();
+      liveCam.play().catch(() => {});
       mulakanImbasanBerterusan();
     } catch (err) {
       detectedIdentityEl.textContent = "🎙️ Kamera Tidak Aktif";
@@ -556,6 +604,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   }
 
   function hentikanKameraSepenuhnya() {
+    if (modLive) setLive(false);
     if (detectionInterval) {
       clearInterval(detectionInterval);
       detectionInterval = null;
@@ -565,6 +614,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
       webcamStream = null;
     }
     videoEl.srcObject = null;
+    liveCam.srcObject = null;
     AURA.face.seen = false;
     AURA.emotion = "neutral";
     cameraStage.classList.remove("face-on");
@@ -613,7 +663,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
         AURA.emotion = topEmotionKey;
         const bx = detection.detection.box;
         const vw = videoEl.videoWidth || 640, vh = videoEl.videoHeight || 480;
-        AURA.face = { x: -(((bx.x + bx.width / 2) / vw) * 2 - 1), y: ((bx.y + bx.height / 2) / vh) * 2 - 1, seen: true };
+        const fx = ((bx.x + bx.width / 2) / vw) * 2 - 1;
+        AURA.face = { x: AURA.mirror ? -fx : fx, y: ((bx.y + bx.height / 2) / vh) * 2 - 1, seen: true };
         cameraStage.classList.add("face-on");
 
         if (faceMatcher && detection.descriptor) {
@@ -854,13 +905,40 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
     if (nm) n = (" " + n + " ").replace(new RegExp("\\s" + nm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?=\\s)", "g"), " ");
     return n.replace(/\s+/g, " ").trim();
   }
+  // Jarak ejaan ringkas (Levenshtein) untuk tangkap gema yang tersalah dengar
+  function jarakEjaan(a, b) {
+    const m = a.length, n = b.length;
+    if (Math.abs(m - n) > 2) return 9;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const cur = [i];
+      for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[n];
+  }
+  function perkataanAI() {
+    return new Set(normal(teksSedangDibaca + " " + aiName + " " + userName).split(" ").filter(Boolean));
+  }
+  function samaDenganAI(w, ai) {
+    if (ai.has(w)) return true;
+    if (w.length < 4) return false;
+    for (const b of ai) { if (b.length >= 4 && jarakEjaan(w, b) <= (w.length >= 7 ? 2 : 1)) return true; }
+    return false;
+  }
+  // Perkataan yang BUKAN daripada ayat yang AI sedang / baru sebut
+  function perkataanAsing(t) {
+    const w = normal(t).split(" ").filter(Boolean);
+    if (!teksSedangDibaca) return w;
+    const ai = perkataanAI();
+    return w.filter(x => !samaDenganAI(x, ai));
+  }
   // Adakah apa yang mikrofon dengar sebenarnya suara AI sendiri (gema speaker)?
   function gemaSuaraAI(t) {
     if (!teksSedangDibaca || performance.now() > gemaHinggaMasa) return false;
-    const w = normal(t).split(" ").filter(x => x.length > 2);
+    const w = normal(t).split(" ").filter(Boolean);
     if (!w.length) return true;
-    const ai = new Set(normal(teksSedangDibaca).split(" "));
-    return w.filter(x => ai.has(x)).length / w.length >= 0.5;
+    return (w.length - perkataanAsing(t).length) / w.length >= 0.4;
   }
 
   function mulaDengar() {
@@ -896,8 +974,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
     const adaSementara = !!teksSementara.trim();
     kosongkanPenimbal();
     if (adaSementara && recognition) { try { recognition.abort(); } catch (e) {} } // elak hantar ayat sama dua kali
-    if (!teks) return;
-    if (gemaSuaraAI(teks)) { textMessageInput.value = ""; return; }
+    if (!teks || normal(teks).replace(/\s/g, "").length < 2) { textMessageInput.value = ""; return; }
+    if (isAiSpeaking || gemaSuaraAI(teks)) { textMessageInput.value = ""; return; }
 
     // Arahan berhenti sahaja -> jangan hantar ke AI, terus dengar
     if (arahanBerhenti(teks) || panggilNamaAI(teks)) {
@@ -936,34 +1014,41 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
     };
 
     recognition.onresult = (event) => {
-      let sementara = "";
+      let sementara = "", muktamadBaru = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const r = event.results[i];
         const t = r[0].transcript;
-        if (r.isFinal) teksMuktamad += " " + t;
+        if (r.isFinal) muktamadBaru += " " + t;
         else sementara += " " + t;
       }
-      teksSementara = sementara;
+      const cebisan = (muktamadBaru + " " + sementara).replace(/\s+/g, " ").trim();
+      if (!cebisan) return;
+
+      // 1) AI SEDANG BERCAKAP: mikrofon akan dengar suara AI sendiri dari speaker.
+      //    Semua yang AI sebut DIBUANG. Hanya perkataan baharu daripada pengguna dikira.
+      if (isAiSpeaking) {
+        const asing = perkataanAsing(cebisan);
+        const jumlah = normal(cebisan).split(" ").filter(Boolean).length;
+        const teksAsing = asing.join(" ");
+        const minta = !!teksAsing && (arahanBerhenti(teksAsing) || panggilNamaAI(teksAsing));
+        const menyampuk = asing.filter(x => x.length > 1).length >= 3 && asing.length / Math.max(1, jumlah) >= 0.7;
+        if (!minta && !menyampuk) return; // gema suara AI -> abaikan sepenuhnya, jangan simpan
+        hentikanSuaraAI(true);
+        kosongkanPenimbal();
+        const baki = minta ? buangArahan(teksAsing) : teksAsing;
+        if (baki.split(" ").filter(Boolean).length < 2) { textMessageInput.value = ""; return; }
+        teksMuktamad = baki;
+      } else if (performance.now() < gemaHinggaMasa && gemaSuaraAI(cebisan)) {
+        // 1b) Ekor gema: AI baru habis cakap, enjin suara lambat hantar ayat AI -> buang
+        teksSementara = "";
+        return;
+      } else {
+        teksMuktamad += muktamadBaru;
+        teksSementara = sementara;
+      }
       const semua = (teksMuktamad + " " + teksSementara).replace(/\s+/g, " ").trim();
       if (!semua) return;
       AURA.heardAt = performance.now();
-
-      // 1) AI sedang bercakap: dengar arahan "berhenti" / nama AI / pengguna menyampuk
-      if (isAiSpeaking) {
-        if (arahanBerhenti(semua) || panggilNamaAI(semua)) {
-          hentikanSuaraAI(true);
-          const baki = buangArahan(semua);
-          kosongkanPenimbal();
-          if (baki.split(" ").filter(Boolean).length >= 2) teksMuktamad = baki;
-          else { textMessageInput.value = ""; return; }
-        } else if (!gemaSuaraAI(semua) && normal(semua).split(" ").filter(x => x.length > 1).length >= 2) {
-          // Pengguna mula bercakap -> AI terus diam & dengar ucapan baharu
-          hentikanSuaraAI(true);
-        } else {
-          if (teksMuktamad.trim() && gemaSuaraAI(teksMuktamad)) teksMuktamad = "";
-          return; // abaikan gema suara AI
-        }
-      }
 
       // 1b) AI sedang berfikir & pengguna bercakap ayat baharu -> batal jawapan lama, dengar yang baharu
       if (AURA.thinking && !arahanBerhenti(semua) && normal(semua).split(" ").length >= 2) {
@@ -1103,7 +1188,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
       isAiSpeaking = false;
       AURA.speaking = false;
       orbSphere.classList.remove("speaking");
-      gemaHinggaMasa = performance.now() + 1200; // ekor gema dari speaker
+      gemaHinggaMasa = performance.now() + 2200; // ekor gema dari speaker
       orbStatusLabel.textContent = "Sedia mendengar";
       if (isHandsfree && recognition) { mahuDengar = true; setTimeout(mulaDengar, 100); }
     };
@@ -1217,7 +1302,9 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
 
     const modKameraLabel = isMicOnlyMode
       ? "Dimatikan (Berbual Guna Mikrofon Sahaja)"
-      : (isCameraHidden ? "Kamera Disembunyikan" : "Kamera Aktif");
+      : modLive
+        ? "Mod Live: anda (AI) kelihatan terapung sebagai zarah cahaya di dalam kamera live pengguna, " + (arahKamera === "user" ? "kamera depan, anda bersama dia" : "kamera belakang, anda berada dalam bilik / tempat dia")
+        : (isCameraHidden ? "Kamera Disembunyikan" : "Kamera Aktif");
 
     AURA.thinking = true;
     orbStatusLabel.textContent = "💭 " + aiName + " sedang berfikir...";
@@ -1305,7 +1392,60 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   document.getElementById("btnCloseSettings").addEventListener("click", () => bukaLaci(false));
   drawerBackdrop.addEventListener("click", () => bukaLaci(false));
   btnChangeName.addEventListener("click", () => bukaLaci(false));
-  cameraStage.addEventListener("click", () => cameraStage.classList.toggle("expanded"));
+  /* ---------- MOD LIVE: Aura hidup di dalam kamera live ---------- */
+  const liveHint = document.getElementById("liveHint");
+  const btnLiveMode = document.getElementById("btnLiveMode");
+  let pemasaHint = null;
+  function tunjukHint(teks, ms) {
+    liveHint.textContent = teks;
+    liveHint.classList.add("show");
+    clearTimeout(pemasaHint);
+    pemasaHint = setTimeout(() => liveHint.classList.remove("show"), ms || 4500);
+  }
+  async function setLive(on) {
+    if (on) {
+      if (isMicOnlyMode) {
+        isMicOnlyMode = false;
+        btnMicOnlyMode.classList.remove("active-toggle");
+        btnMicOnlyMode.textContent = "🎙️ Guna Mic Sahaja";
+        if (!isCameraHidden) aktifkanPaparanOrb(false);
+      }
+      if (!webcamStream) await hidupkanKamera();
+      if (!webcamStream) { alert("Kamera tidak dapat dibuka. Sila benarkan akses kamera dalam pelayar."); return; }
+      liveCam.srcObject = webcamStream;
+      liveCam.play().catch(() => {});
+    }
+    modLive = on;
+    AURA.live = on;
+    document.body.classList.toggle("live", on);
+    cameraStage.classList.toggle("live-on", on);
+    btnLiveMode.textContent = on ? "✕ Keluar Mod Live" : "✨ Mod Live: Bawa Aura Masuk Kamera";
+    localStorage.setItem("aura_live", on ? "on" : "off");
+    if (on) {
+      bukaLaci(false);
+      tunjukHint("✨ Sentuh & seret untuk bawa " + aiName + " ke mana-mana • Cubit 2 jari untuk besar / kecil", 6000);
+    } else {
+      liveHint.classList.remove("show");
+    }
+  }
+  async function tukarKamera() {
+    const asal = arahKamera;
+    arahKamera = arahKamera === "user" ? "environment" : "user";
+    if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
+    if (webcamStream) { webcamStream.getTracks().forEach(t => t.stop()); webcamStream = null; }
+    AURA.face.seen = false;
+    await hidupkanKamera();
+    if (!webcamStream) { arahKamera = asal; await hidupkanKamera(); }
+    tunjukHint(arahKamera === "user" ? "🤳 Kamera depan • " + aiName + " bersama anda" : "📷 Kamera belakang • letak " + aiName + " di mana-mana dalam bilik", 3500);
+  }
+  cameraStage.addEventListener("click", () => setLive(!modLive));
+  btnLiveMode.addEventListener("click", () => setLive(!modLive));
+  document.getElementById("btnKeluarLive").addEventListener("click", () => setLive(false));
+  document.getElementById("btnTukarKamera").addEventListener("click", tukarKamera);
+  document.getElementById("btnResetPosisi").addEventListener("click", () => {
+    window.dispatchEvent(new CustomEvent("aura-reset-posisi"));
+    AURA.dropAt = performance.now();
+  });
 
   // Salin status sambungan ke titik kecil pada butang tetapan
   new MutationObserver(() => { miniDot.className = "status-dot-mini " + aiDot.className.replace("dot-ind", "").trim(); })
@@ -1379,6 +1519,55 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   addEventListener("pointerdown", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.t = performance.now(); A.pokeAt = performance.now(); });
   addEventListener("pointerleave", () => { ptr.on = false; });
 
+  // --- MOD LIVE: seret / cubit untuk gerakkan Aura di dalam kamera ---
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  let simpan = null;
+  try { simpan = JSON.parse(localStorage.getItem("aura_live_pos") || "null"); } catch (e) {}
+  let posX = simpan ? simpan.x : 0.5, posY = simpan ? simpan.y : 0.36, liveScale = simpan ? simpan.s : 1;
+  let curX = null, curY = null, velX = 0, velY = 0, dragging = false, pinch = null;
+  const jari = new Map();
+  const simpanPos = () => localStorage.setItem("aura_live_pos", JSON.stringify({ x: posX, y: posY, s: liveScale }));
+  const diUI = t => t && t.closest && t.closest("button,input,select,textarea,a,.bottom-dock,.settings-drawer,.drawer-backdrop,.mode-bar,.modal-backdrop,.live-ctrl,.settings-fab");
+  function letak(x, y) { posX = clamp(x / W, 0.06, 0.94); posY = clamp(y / H, 0.08, 0.92); }
+  addEventListener("pointerdown", e => {
+    if (!A.live || diUI(e.target)) return;
+    jari.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (jari.size >= 2) {
+      const [a, b] = [...jari.values()];
+      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, s: liveScale, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+      dragging = false;
+    } else {
+      dragging = true;
+      letak(e.clientX, e.clientY);
+      A.grabAt = performance.now();
+    }
+  });
+  addEventListener("pointermove", e => {
+    if (!jari.has(e.pointerId)) return;
+    jari.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && jari.size >= 2) {
+      const [a, b] = [...jari.values()];
+      liveScale = clamp(pinch.s * (Math.hypot(a.x - b.x, a.y - b.y) || 1) / pinch.d, 0.35, 2.6);
+      letak((a.x + b.x) / 2, (a.y + b.y) / 2);
+    } else if (dragging) letak(e.clientX, e.clientY);
+  });
+  const lepas = e => {
+    if (!jari.has(e.pointerId)) return;
+    jari.delete(e.pointerId);
+    if (jari.size < 2) pinch = null;
+    if (jari.size === 0) { if (dragging || A.live) A.dropAt = performance.now(); dragging = false; simpanPos(); }
+  };
+  addEventListener("pointerup", lepas);
+  addEventListener("pointercancel", lepas);
+  addEventListener("wheel", e => {
+    if (!A.live) return;
+    liveScale = clamp(liveScale * (e.deltaY < 0 ? 1.08 : 0.93), 0.35, 2.6); simpanPos();
+  }, { passive: true });
+  addEventListener("aura-reset-posisi", () => { posX = 0.5; posY = 0.36; liveScale = 1; simpanPos(); });
+
+  // --- Kelip mata (rasa hidup) ---
+  let blinkAt = -9999, nextBlink = performance.now() + 2500;
+
   let rot = 0, swirl = 0, energy = 0, time = 0, last = performance.now();
   let wL = 0, wT = 0, wS = 0, wordE = 0;
   let hue = 190, sat = 90, gx = 0, gy = 0;
@@ -1419,7 +1608,16 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
     // Pandangan: ikut wajah anda, jari anda, atau merayau sendiri
     let tgx, tgy;
     const ptrFresh = ptr.on && now - ptr.t < 2500;
-    if (ptrFresh) { tgx = (ptr.x / W) * 2 - 1; tgy = (ptr.y / H) * 2 - 1; }
+    const live = !!A.live;
+    if (live) {
+      const ox = curX === null ? W / 2 : curX, oy = curY === null ? H / 2 : curY;
+      if (dragging || pinch) { tgx = velX * 0.09; tgy = velY * 0.09; }               // pandang arah dia dibawa
+      else if (A.face && A.face.seen) {                                               // pandang wajah anda dalam kamera
+        tgx = (((A.face.x + 1) / 2) * W - ox) / (W * 0.32);
+        tgy = (((A.face.y + 1) / 2) * H - oy) / (H * 0.32);
+      } else { tgx = Math.sin(time * 0.23) * 0.5 + Math.sin(time * 0.61) * 0.2; tgy = Math.sin(time * 0.31 + 1) * 0.3; }
+    }
+    else if (ptrFresh) { tgx = (ptr.x / W) * 2 - 1; tgy = (ptr.y / H) * 2 - 1; }
     else if (A.face && A.face.seen) { tgx = A.face.x; tgy = A.face.y; }
     else { tgx = Math.sin(time * 0.23) * 0.45 + Math.sin(time * 0.61) * 0.15; tgy = Math.sin(time * 0.31 + 1) * 0.25; }
     gx = lerp(gx, Math.max(-1, Math.min(1, tgx)), 0.04 * dt);
@@ -1434,22 +1632,71 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
     const poke = tp < 1 ? Math.exp(-tp * 4) : 0;
 
     // Latar & jejak
-    ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = "rgba(1,4,9,0.32)"; ctx.fillRect(0, 0, W, H);
-    for (const s of S) {
-      s.y -= s.v * dt * (1 + energy * 3); if (s.y < 0) s.y = 1;
-      ctx.fillStyle = `rgba(140,220,255,${0.12 + 0.25 * Math.abs(Math.sin(time + s.a * 6))})`;
-      ctx.fillRect(s.x * W, s.y * H, 1.2, 1.2);
+    if (live) {
+      // Kanvas lutsinar: kamera live kelihatan di belakang, jejak zarah pudar perlahan
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = "rgba(0,0,0,0.42)"; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "source-over";
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = "rgba(1,4,9,0.32)"; ctx.fillRect(0, 0, W, H);
+      for (const s of S) {
+        s.y -= s.v * dt * (1 + energy * 3); if (s.y < 0) s.y = 1;
+        ctx.fillStyle = `rgba(140,220,255,${0.12 + 0.25 * Math.abs(Math.sin(time + s.a * 6))})`;
+        ctx.fillRect(s.x * W, s.y * H, 1.2, 1.2);
+      }
     }
 
-    // Kedudukan & saiz aura (atas skrin, tidak ditutup dok borak)
+    // Goyang bila dilepaskan, membesar sedikit bila dipegang
+    const td = A.dropAt ? (now - A.dropAt) / 1000 : 9;
+    const jiggle = td < 1.4 ? Math.sin(td * 15) * Math.exp(-td * 3.4) * 0.09 : 0;
+    const tg = A.grabAt ? (now - A.grabAt) / 1000 : 9;
+    const grab = (dragging || pinch) ? 0.06 : (tg < 0.6 ? 0.06 * (1 - tg / 0.6) : 0);
+
+    // Kedudukan & saiz aura
     const breath = Math.sin(time * 1.2) * 0.02;
-    const baseR = mobile ? Math.min(W * 0.36, H * 0.21) : Math.min(W * 0.3, H * 0.22);
-    const R = baseR * (1 + breath + energy * 0.16 - absorb * 0.14 + poke * 0.08);
-    const cx = W / 2 + gx * W * 0.035;
-    const cy = H * (mobile ? 0.3 : 0.32) + gy * H * 0.025 + Math.sin(time * 0.7) * 4;
+    let baseR, cx, cy;
+    if (live) {
+      baseR = (mobile ? Math.min(W * 0.24, H * 0.14) : Math.min(W * 0.16, H * 0.19)) * liveScale;
+      const tx = posX * W, ty = posY * H;
+      if (curX === null) { curX = tx; curY = ty; }
+      const nx = lerp(curX, tx, Math.min(1, 0.11 * dt)), ny = lerp(curY, ty, Math.min(1, 0.11 * dt));
+      velX = lerp(velX, nx - curX, 0.3); velY = lerp(velY, ny - curY, 0.3);
+      curX = nx; curY = ny;
+      // Terapung naik turun seperti makhluk hidup
+      cx = curX + Math.sin(time * 0.53) * baseR * 0.05;
+      cy = curY + Math.sin(time * 1.25) * baseR * 0.09;
+    } else {
+      baseR = mobile ? Math.min(W * 0.36, H * 0.21) : Math.min(W * 0.3, H * 0.22);
+      cx = W / 2 + gx * W * 0.035;
+      cy = H * (mobile ? 0.3 : 0.32) + gy * H * 0.025 + Math.sin(time * 0.7) * 4;
+      velX = lerp(velX, 0, 0.2); velY = lerp(velY, 0, 0.2);
+      curX = cx; curY = cy;
+    }
+    const R = baseR * (1 + breath + energy * 0.16 - absorb * 0.14 + poke * 0.08 + jiggle + grab);
     const labelTop = cy + baseR * 1.25 + 18;
-    document.documentElement.style.setProperty("--label-top", labelTop + "px");
+    document.documentElement.style.setProperty("--label-top", Math.min(labelTop, H - 40) + "px");
+    const lw = label ? label.offsetWidth / 2 + 10 : 90;
+    document.documentElement.style.setProperty("--label-left", live ? clamp(cx, lw, Math.max(lw, W - lw)) + "px" : "50%");
+
+    // Bayang di "lantai" supaya dia rasa betul-betul berada dalam ruang anda
+    if (live) {
+      const naik = 1 + Math.sin(time * 1.25) * 0.09;
+      ctx.save();
+      ctx.translate(cx, curY + baseR * 1.5);
+      ctx.scale(1, 0.2);
+      const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, baseR * 0.95 * naik);
+      sg.addColorStop(0, `rgba(0,0,0,${0.38 / naik})`);
+      sg.addColorStop(0.6, `hsla(${hueNow},${sat}%,45%,${0.08 + energy * 0.12})`);
+      sg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, baseR * 0.95 * naik, 0, 6.29); ctx.fill();
+      ctx.restore();
+    }
+
+    // Kelip mata
+    if (now > nextBlink) { blinkAt = now; nextBlink = now + 2600 + Math.random() * 4200; }
+    const tb = now - blinkAt;
+    const blink = tb < 200 ? Math.sin((tb / 200) * Math.PI) : 0;
 
     // Cahaya teras + "mata" yang memandang anda
     const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.5);
@@ -1459,15 +1706,16 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
 
     const ex = cx + gx * R * 0.32, ey = cy + gy * R * 0.26 + nod * R * 0.5;
     const eye = ctx.createRadialGradient(ex, ey, 0, ex, ey, R * 0.55);
-    eye.addColorStop(0, `hsla(${hueNow + 10},100%,85%,${0.22 + energy * 0.35 + wL * 0.12})`);
+    eye.addColorStop(0, `hsla(${hueNow + 10},100%,85%,${(0.22 + energy * 0.35 + wL * 0.12 + (live ? 0.1 : 0)) * (1 - blink * 0.85)})`);
     eye.addColorStop(1, `hsla(${hueNow},100%,60%,0)`);
     ctx.fillStyle = eye; ctx.beginPath(); ctx.arc(ex, ey, R * 0.55, 0, 6.29); ctx.fill();
 
     // Putaran: lebih laju bila berfikir; condong ke arah anda
     rot += (0.0022 + energy * 0.012) * dt;
     swirl += 0.045 * wT * dt;
-    const yaw = rot + gx * 0.55;
-    const tilt = 0.3 + gy * 0.45 + nod;
+    const lean = clamp(velX * 0.03, -0.7, 0.7), leanY = clamp(velY * 0.03, -0.6, 0.6);
+    const yaw = rot + gx * 0.55 + lean;
+    const tilt = 0.3 + gy * 0.45 + nod + leanY + blink * 0.12;
     const cr = Math.cos(yaw), sr = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
 
     ctx.globalCompositeOperation = "lighter";
@@ -1497,7 +1745,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
       let px = cx + x1 * R * k * 1.2, py = cy + y1 * R * k * 1.2;
 
       // Mengelak jari / tetikus
-      if (ptrFresh) {
+      if (ptrFresh && !live) {
         const dx = px - ptr.x, dy = py - ptr.y, d2 = dx * dx + dy * dy;
         if (d2 < repelR * repelR) {
           const d = Math.sqrt(d2) || 1, push = (1 - d / repelR) * 26;
