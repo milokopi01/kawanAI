@@ -1,4 +1,4 @@
-const CACHE_NAME = "aura-nebula-v7";
+const CACHE_NAME = "aura-nebula-v9";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",

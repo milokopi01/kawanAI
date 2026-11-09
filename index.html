@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTXkSOs2bFK2VZ89KIMxTZaTQbmTAyOEZd-1zqu7vivAKrZ/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -56,7 +56,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
 
   /* Label status halus di bawah aura */
   .orb-status-label{
-    position:fixed;left:var(--label-left,50%);top:var(--label-top,54vh);transform:translateX(-50%);
+    position:fixed;left:0;top:0;transform:translate3d(50vw,54vh,0) translateX(-50%);will-change:transform;
     z-index:2;font-size:.78rem;font-weight:600;letter-spacing:.3px;color:rgba(200,240,255,.72);
     text-shadow:0 0 12px rgba(34,211,238,.45);white-space:nowrap;pointer-events:none;
     transition:opacity .4s ease;
@@ -87,10 +87,15 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 34%);mask-image:linear-gradient(to bottom,transparent 0,#000 34%);
   }
   .chat-stream::-webkit-scrollbar{display:none}
-  .msg-bubble{max-width:84%;padding:11px 15px;border-radius:20px;font-size:.9rem;line-height:1.5;animation:popMsg .3s ease-out;
-    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  #auraParticles{will-change:contents;contain:strict}
+  /* Telefon: kurangkan kesan kabur yang berat supaya animasi lancar */
+  @media (max-width:700px){
+    .chat-input-bar{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+    .live-btn,.live-hint,.settings-fab,.mode-bar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  }
+  .msg-bubble{max-width:84%;padding:11px 15px;border-radius:20px;font-size:.9rem;line-height:1.5;animation:popMsg .3s ease-out;contain:layout paint}
   @keyframes popMsg{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-  .msg-ai{align-self:flex-start;background:rgba(10,34,50,.62);color:var(--ink);border:1px solid rgba(34,211,238,.2);border-bottom-left-radius:6px}
+  .msg-ai{align-self:flex-start;background:rgba(10,34,50,.84);color:var(--ink);border:1px solid rgba(34,211,238,.2);border-bottom-left-radius:6px}
   .msg-user{align-self:flex-end;background:linear-gradient(135deg,rgba(14,165,233,.82),rgba(34,211,238,.72));color:#02131c;border-bottom-right-radius:6px}
   .msg-meta{font-size:.66rem;opacity:.7;margin-top:4px;font-weight:600}
   .msg-user .msg-meta{color:#032a3a}
@@ -404,6 +409,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
 
     inputAiName.value = aiName;
     aiNameBadge.textContent = aiName;
+    btnBargeIn.style.display = "none"; // mikrofon kini sentiasa ditutup semasa AI bercakap
     btnBargeIn.classList.toggle("active-toggle", bolehPotong);
     btnBargeIn.textContent = bolehPotong ? "✋ Boleh Potong Cakap AI: ON" : "✋ Boleh Potong Cakap AI: OFF";
     if (userName) {
@@ -627,7 +633,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     if (detectionInterval) clearInterval(detectionInterval);
 
     detectionInterval = setInterval(async () => {
-      if (!modelsLoaded || isMicOnlyMode || videoEl.paused || videoEl.ended || imbasSibuk) return;
+      if (!modelsLoaded || isMicOnlyMode || videoEl.paused || videoEl.ended || imbasSibuk || document.hidden) return;
       // Jimat CPU semasa AI berfikir supaya telefon tidak lembap
       if (AURA.thinking) return;
       imbasSibuk = true;
@@ -644,8 +650,9 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
       imbasSibuk = false;
 
       const ctx = canvasEl.getContext("2d");
-      canvasEl.width = videoEl.videoWidth || 640;
-      canvasEl.height = videoEl.videoHeight || 480;
+      const cw = videoEl.videoWidth || 640, ch = videoEl.videoHeight || 480;
+      if (canvasEl.width !== cw) canvasEl.width = cw;
+      if (canvasEl.height !== ch) canvasEl.height = ch;
       ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
       if (detection) {
@@ -880,6 +887,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
   let pemasaSenyap = null;
   let teksSedangDibaca = "";     // untuk tapis gema suara AI sendiri
   let gemaHinggaMasa = 0;
+  let sesiDengarMula = 0;        // bila sesi mendengar semasa bermula
+  let masaAkhirAICakap = 0;      // bila AI mula/akhir bercakap (sesi lebih lama dibuang)
   const SENYAP_MS = 1000;        // berhenti cakap 1 saat = ayat selesai
 
   const RE_BERHENTI = /(^|\s)(berhenti|henti|hentikan|stop|diam|senyap|cukup|tunggu|kejap|sekejap|jap|shh+|sudah sudah|dah dah|dengar dulu|dengar sini|dengar balik|dengar kembali)(\s|$)/i;
@@ -941,10 +950,25 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     return (w.length - perkataanAsing(t).length) / w.length >= 0.4;
   }
 
+  // Mikrofon DITUTUP sepenuhnya semasa AI bercakap (dan sejurus selepasnya),
+  // supaya suara AI dari speaker tidak dirakam. Hanya suara pengguna didengar.
+  function aiMasihBersuara() {
+    return isAiSpeaking || (("speechSynthesis" in window) && (window.speechSynthesis.speaking || window.speechSynthesis.pending));
+  }
+  let pemasaMulaDengar = null;
   function mulaDengar() {
     if (!recognition || recAktif || !mahuDengar) return;
-    if (isAiSpeaking && !bolehPotong) return;
+    clearTimeout(pemasaMulaDengar);
+    if (aiMasihBersuara()) { pemasaMulaDengar = setTimeout(mulaDengar, 300); return; } // sambung bila AI habis cakap
+    const baki = gemaHinggaMasa - performance.now();
+    if (baki > 0) { pemasaMulaDengar = setTimeout(mulaDengar, baki + 30); return; }
     try { recognition.start(); } catch (e) {}
+  }
+  function tutupMikUntukAI() {
+    clearTimeout(pemasaMulaDengar);
+    kosongkanPenimbal();
+    textMessageInput.value = "";
+    if (recognition && recAktif) { try { recognition.abort(); } catch (e) {} }
   }
 
   function kosongkanPenimbal() {
@@ -959,7 +983,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     isAiSpeaking = false;
     AURA.speaking = false;
     orbSphere.classList.remove("speaking");
-    gemaHinggaMasa = performance.now() + 800;
+    gemaHinggaMasa = performance.now() + (tadiBercakap ? 500 : 0);
     if (beriMaklum && tadiBercakap) {
       orbStatusLabel.textContent = "✋ Baik, saya berhenti. Saya dengar...";
       AURA.nodAt = performance.now();
@@ -1003,6 +1027,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
+      if (aiMasihBersuara()) { try { recognition.abort(); } catch (e) {} return; }
+      sesiDengarMula = performance.now();
       recAktif = true;
       isListening = true;
       if (!isAiSpeaking) {
@@ -1024,28 +1050,14 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
       const cebisan = (muktamadBaru + " " + sementara).replace(/\s+/g, " ").trim();
       if (!cebisan) return;
 
-      // 1) AI SEDANG BERCAKAP: mikrofon akan dengar suara AI sendiri dari speaker.
-      //    Semua yang AI sebut DIBUANG. Hanya perkataan baharu daripada pengguna dikira.
-      if (isAiSpeaking) {
-        const asing = perkataanAsing(cebisan);
-        const jumlah = normal(cebisan).split(" ").filter(Boolean).length;
-        const teksAsing = asing.join(" ");
-        const minta = !!teksAsing && (arahanBerhenti(teksAsing) || panggilNamaAI(teksAsing));
-        const menyampuk = asing.filter(x => x.length > 1).length >= 3 && asing.length / Math.max(1, jumlah) >= 0.7;
-        if (!minta && !menyampuk) return; // gema suara AI -> abaikan sepenuhnya, jangan simpan
-        hentikanSuaraAI(true);
-        kosongkanPenimbal();
-        const baki = minta ? buangArahan(teksAsing) : teksAsing;
-        if (baki.split(" ").filter(Boolean).length < 2) { textMessageInput.value = ""; return; }
-        teksMuktamad = baki;
-      } else if (performance.now() < gemaHinggaMasa && gemaSuaraAI(cebisan)) {
-        // 1b) Ekor gema: AI baru habis cakap, enjin suara lambat hantar ayat AI -> buang
-        teksSementara = "";
+      // 1) AI sedang bercakap / baru habis bercakap: apa sahaja yang mikrofon dengar
+      //    ialah suara AI sendiri dari speaker -> BUANG semuanya, jangan rakam.
+      if (aiMasihBersuara() || performance.now() < gemaHinggaMasa || sesiDengarMula < masaAkhirAICakap) {
+        tutupMikUntukAI();
         return;
-      } else {
-        teksMuktamad += muktamadBaru;
-        teksSementara = sementara;
       }
+      teksMuktamad += muktamadBaru;
+      teksSementara = sementara;
       const semua = (teksMuktamad + " " + teksSementara).replace(/\s+/g, " ").trim();
       if (!semua) return;
       AURA.heardAt = performance.now();
@@ -1173,25 +1185,33 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     btnMicTalk.classList.remove("listening");
     orbSphere.classList.remove("listening");
     orbSphere.classList.add("speaking");
-    orbStatusLabel.textContent = bolehPotong ? "🔊 " + aiName + " bercakap • sebut \"berhenti\" untuk potong" : "🔊 " + aiName + " sedang bercakap...";
-    kosongkanPenimbal();
+    orbStatusLabel.textContent = "🔊 " + aiName + " bercakap • tekan 🎤 untuk potong";
+    masaAkhirAICakap = performance.now();
+    tutupMikUntukAI(); // mikrofon ditutup: suara AI tidak akan dirakam
 
-    if (!bolehPotong && recognition && recAktif) {
-      try { recognition.abort(); } catch (e) {}
-    } else if (bolehPotong) {
-      mahuDengar = true;
-      mulaDengar();
-    }
-
+    let sudahSelesai = false;
     const selesai = () => {
-      if (token !== tokenSuara) return;
+      if (token !== tokenSuara || sudahSelesai) return;
+      sudahSelesai = true;
+      clearInterval(pengawas);
       isAiSpeaking = false;
       AURA.speaking = false;
       orbSphere.classList.remove("speaking");
-      gemaHinggaMasa = performance.now() + 2200; // ekor gema dari speaker
+      masaAkhirAICakap = performance.now();
+      gemaHinggaMasa = performance.now() + 900; // ekor gema dari speaker
       orbStatusLabel.textContent = "Sedia mendengar";
-      if (isHandsfree && recognition) { mahuDengar = true; setTimeout(mulaDengar, 100); }
+      if (isHandsfree && recognition) { mahuDengar = true; mulaDengar(); }
     };
+    // Pengawas: sesetengah telefon tidak hantar 'onend' -> semak sendiri
+    let senyapSejak = 0;
+    const pengawas = setInterval(() => {
+      if (token !== tokenSuara) { clearInterval(pengawas); return; }
+      if (recognition && recAktif) { try { recognition.abort(); } catch (e) {} }
+      const ss = window.speechSynthesis;
+      if (ss.speaking || ss.pending) { senyapSejak = 0; return; }
+      if (!senyapSejak) senyapSejak = performance.now();
+      else if (performance.now() - senyapSejak > 1200) selesai();
+    }, 300);
 
     ayat.forEach((a, i) => {
       const u = new SpeechSynthesisUtterance(a.trim());
@@ -1470,13 +1490,37 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
   const A = window.AURA;
   const cv = document.getElementById("auraParticles"), ctx = cv.getContext("2d");
   const label = document.getElementById("orbStatusLabel");
-  let W, H, DPR = Math.min(window.devicePixelRatio || 1, 2), mobile = innerWidth < 700;
+  let W, H, mobile = innerWidth < 700;
+  const DPR_MAX = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
+  let DPR = DPR_MAX;
 
   function layout(){
     W = innerWidth; H = innerHeight; mobile = W < 700;
-    cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
-  layout(); addEventListener("resize", layout);
+  layout();
+  let pemasaSaiz = null;
+  addEventListener("resize", () => { clearTimeout(pemasaSaiz); pemasaSaiz = setTimeout(layout, 120); });
+
+  // Kualiti adaptif: jika telefon lambat, kurangkan beban secara automatik supaya tetap lancar
+  let purataMs = 16, langkah = 1, kiraPantas = 0, kiraLambat = 0;
+  function semakKelancaran(ms){
+    purataMs = purataMs * 0.94 + Math.min(ms, 80) * 0.06;
+    if (purataMs > 26) { kiraLambat++; kiraPantas = 0; } else if (purataMs < 17) { kiraPantas++; kiraLambat = 0; } else { kiraLambat = kiraPantas = 0; }
+    if (kiraLambat > 90) {           // ~1.5 saat tersekat -> ringankan
+      kiraLambat = 0;
+      if (langkah === 1) langkah = 2;
+      else if (DPR > 1) { DPR = 1; layout(); }
+    } else if (kiraPantas > 600) {   // ~10 saat lancar -> naikkan semula
+      kiraPantas = 0;
+      if (DPR < DPR_MAX) { DPR = DPR_MAX; layout(); }
+      else if (langkah > 1) langkah = 1;
+    }
+  }
+
+  // Kumpulan warna zarah: tukar warna ~100 kali sebingkai, bukan ~2000 kali (jauh lebih ringan)
+  const AL = 8, LV = 4, HS = 4;
+  const kumpulan = Array.from({ length: (HS * LV + 1) * AL }, () => []);
 
   // --- Zarah sfera (taburan Fibonacci) ---
   const N = mobile ? 1100 : 1900;
@@ -1572,10 +1616,12 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
   let wL = 0, wT = 0, wS = 0, wordE = 0;
   let hue = 190, sat = 90, gx = 0, gy = 0;
   let lastLabel = "";
+  let bingkai = 0, lebarLabel = 0, labelX = -1, labelY = -1;
 
   const lerp = (a, b, k) => a + (b - a) * k;
 
   function frame(now){
+    semakKelancaran(now - last);
     const dt = Math.min((now - last) / 16.67, 3); last = now; time += 0.016 * dt;
     const listening = !!A.listening, speaking = !!A.speaking, thinking = !!A.thinking;
 
@@ -1640,11 +1686,13 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     } else {
       ctx.globalCompositeOperation = "source-over";
       ctx.fillStyle = "rgba(1,4,9,0.32)"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "rgb(140,220,255)";
       for (const s of S) {
         s.y -= s.v * dt * (1 + energy * 3); if (s.y < 0) s.y = 1;
-        ctx.fillStyle = `rgba(140,220,255,${0.12 + 0.25 * Math.abs(Math.sin(time + s.a * 6))})`;
+        ctx.globalAlpha = 0.12 + 0.25 * Math.abs(Math.sin(time + s.a * 6));
         ctx.fillRect(s.x * W, s.y * H, 1.2, 1.2);
       }
+      ctx.globalAlpha = 1;
     }
 
     // Goyang bila dilepaskan, membesar sedikit bila dipegang
@@ -1674,10 +1722,15 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
       curX = cx; curY = cy;
     }
     const R = baseR * (1 + breath + energy * 0.16 - absorb * 0.14 + poke * 0.08 + jiggle + grab);
-    const labelTop = cy + baseR * 1.25 + 18;
-    document.documentElement.style.setProperty("--label-top", Math.min(labelTop, H - 40) + "px");
-    const lw = label ? label.offsetWidth / 2 + 10 : 90;
-    document.documentElement.style.setProperty("--label-left", live ? clamp(cx, lw, Math.max(lw, W - lw)) + "px" : "50%");
+    if (label) {
+      if (!(bingkai++ % 30) || !lebarLabel) lebarLabel = label.offsetWidth / 2 + 10;
+      const ly = Math.round(Math.min(cy + baseR * 1.25 + 18, H - 40));
+      const lx = Math.round(live ? clamp(cx, lebarLabel, Math.max(lebarLabel, W - lebarLabel)) : W / 2);
+      if (lx !== labelX || ly !== labelY) {
+        labelX = lx; labelY = ly;
+        label.style.transform = `translate3d(${lx}px,${ly}px,0) translateX(-50%)`;
+      }
+    }
 
     // Bayang di "lantai" supaya dia rasa betul-betul berada dalam ruang anda
     if (live) {
@@ -1720,7 +1773,11 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
 
     ctx.globalCompositeOperation = "lighter";
     const repelR = mobile ? 90 : 130;
-    for (const p of P) {
+    for (const b of kumpulan) b.length = 0;
+    const fasa = bingkai & 1;
+    for (let pi = 0; pi < N; pi++) {
+      const p = P[pi];
+      if (langkah > 1 && (pi & 1) !== fasa) continue; // mod ringan: separuh zarah, bergilir
       // Pernafasan organik
       const n = Math.sin(p.x * 3.1 + time * 0.9) + Math.sin(p.y * 2.7 - time * 0.7) + Math.sin(p.z * 3.3 + time * 1.1);
       let disp = 1 + n * 0.028;
@@ -1757,17 +1814,30 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
       const depth = (z2 + 1) / 2, alpha = (0.12 + depth * 0.88) * p.d;
       const size = (0.6 + depth * 1.8) * (1 + energy * 0.55);
       const tw = 0.6 + 0.4 * Math.sin(time * 3 + p.f);
-      ctx.fillStyle = depth > 0.82
-        ? `hsla(${hueNow + 10},100%,94%,${alpha * tw})`
-        : `hsla(${hueNow + p.s * 28},${sat}%,${58 + depth * 26}%,${alpha * tw})`;
+      const ai = Math.min(AL - 1, (alpha * tw * AL) | 0);
+      const ki = depth > 0.82 ? HS * LV : Math.min(HS - 1, (p.s * HS) | 0) * LV + Math.min(LV - 1, (depth / 0.82 * LV) | 0);
       const tail = x1 * sr * 2.4 * (1 + energy * 1.6);
-      ctx.fillRect(px - tail, py, size + Math.abs(tail), size * 0.8);
+      const b = kumpulan[ki * AL + ai];
+      b.push(px - tail, py, size + Math.abs(tail), size * 0.8);
+    }
+    for (let ki = 0; ki <= HS * LV; ki++) {
+      const terang = ki === HS * LV;
+      const h = terang ? hueNow + 10 : hueNow + (((ki / LV) | 0) + 0.5) / HS * 28;
+      const l = terang ? 94 : 58 + ((ki % LV) + 0.5) / LV * 0.82 * 26;
+      const sa = terang ? 100 : sat;
+      for (let ai = 0; ai < AL; ai++) {
+        const b = kumpulan[ki * AL + ai];
+        if (!b.length) continue;
+        ctx.fillStyle = `hsla(${h | 0},${sa | 0}%,${l | 0}%,${((ai + 0.5) / AL).toFixed(3)})`;
+        for (let j = 0; j < b.length; j += 4) ctx.fillRect(b[j], b[j + 1], b[j + 2], b[j + 3]);
+      }
     }
 
     // Gelang orbit
     const ringW = Math.max(wT, wS * 0.6, wL * 0.35);
     if (ringW > 0.02) {
       const rt = 1.15, crt = Math.cos(rt + gy * 0.3), srt = Math.sin(rt + gy * 0.3);
+      ctx.fillStyle = `hsl(${(hueNow + 20) | 0},100%,80%)`;
       for (const q of Rg) {
         q.a += (0.008 + wT * 0.03) * q.s * dt;
         const rr = q.r * (1 + wS * speakLvl * 0.12 * Math.sin(time * 9 + q.f));
@@ -1775,10 +1845,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
         const y1 = -z * srt, z2 = z * crt;
         const k = 1 / (1.9 - z2 * 0.6);
         const px = cx + x * R * k * 1.2, py = cy + y1 * R * k * 1.2 * 0.6;
-        const a = ringW * (0.25 + (z2 + 1) * 0.35) * (0.6 + 0.4 * Math.sin(time * 4 + q.f));
-        ctx.fillStyle = `hsla(${hueNow + 20},100%,80%,${a})`;
+        ctx.globalAlpha = Math.min(1, ringW * (0.25 + (z2 + 1) * 0.35) * (0.6 + 0.4 * Math.sin(time * 4 + q.f)));
         ctx.fillRect(px, py, 1.6, 1.6);
       }
+      ctx.globalAlpha = 1;
     }
     ctx.globalCompositeOperation = "source-over";
 
