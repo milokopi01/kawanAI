@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTXkSOs2bFK2VZ89KIMxTZaTQbmTAyOEZd-1zqu7vivAKrZ/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -266,6 +266,25 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
   </div>
 
   <div id="faceScanStatus" class="scan-progress"></div>
+
+  <div class="metric-card" id="auraLookCard">
+    <div class="metric-label">🌈 Rupa Aurora</div>
+    <label style="display:block;font-size:.76rem;margin:8px 0 4px">Saiz: <b id="auraSizeVal">130%</b></label>
+    <input id="auraSize" type="range" min="60" max="250" step="5" value="130" style="width:100%">
+    <label style="display:block;font-size:.76rem;margin:10px 0 4px">Kejelasan / Terang: <b id="auraBrightVal">120%</b></label>
+    <input id="auraBright" type="range" min="60" max="200" step="5" value="120" style="width:100%">
+    <label style="display:block;font-size:.76rem;margin:10px 0 4px">Warna</label>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="auraColorMode" style="flex:1;padding:8px;border-radius:10px;background:#06121c;color:#e6f6ff;border:1px solid rgba(120,220,255,.3)">
+        <option value="auto">Ikut emosi (auto)</option>
+        <option value="custom">Warna pilihan saya</option>
+        <option value="rainbow">Pelangi berubah-ubah</option>
+      </select>
+      <input id="auraColor" type="color" value="#22d3ee" style="width:44px;height:36px;border:none;background:none">
+    </div>
+    <label style="display:block;font-size:.76rem;margin:10px 0 4px">Kepekaan bunyi: <b id="auraSensVal">Tinggi</b></label>
+    <input id="auraSens" type="range" min="1" max="3" step="1" value="3" style="width:100%">
+  </div>
 
   <button id="btnLiveMode" class="btn-3d primary-3d">✨ Mod Live: Bawa Aura Masuk Kamera</button>
   <button id="btnRegisterFace" class="btn-3d primary-3d">📸 Rakam & Ingat Wajah Saya (3 Saat)</button>
@@ -1490,6 +1509,44 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
   const A = window.AURA;
   const cv = document.getElementById("auraParticles"), ctx = cv.getContext("2d");
   const label = document.getElementById("orbStatusLabel");
+  // ===== Tetapan rupa Aurora (saiz, warna, kejelasan, kepekaan bunyi) =====
+  const CFG = Object.assign({ size: 1.3, bright: 1.2, mode: "auto", color: "#22d3ee", sens: 3 },
+    (() => { try { return JSON.parse(localStorage.getItem("aura_look") || "{}"); } catch (e) { return {}; } })());
+  A.cfg = CFG;
+  function hexKeHsl(hex){
+    const n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g2 = (n >> 8 & 255) / 255, b2 = (n & 255) / 255;
+    const mx = Math.max(r, g2, b2), mn = Math.min(r, g2, b2), l = (mx + mn) / 2, d = mx - mn;
+    let h = 0, s2 = 0;
+    if (d) { s2 = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g2 - b2) / d) % 6 : mx === g2 ? (b2 - r) / d + 2 : (r - g2) / d + 4; h *= 60; if (h < 0) h += 360; }
+    return [h, Math.max(60, s2 * 100)];
+  }
+  (function ikatTetapan(){
+    const $ = id => document.getElementById(id);
+    const sz = $("auraSize"), br = $("auraBright"), md = $("auraColorMode"), co = $("auraColor"), se = $("auraSens");
+    if (!sz) return;
+    const simpanLook = () => localStorage.setItem("aura_look", JSON.stringify(CFG));
+    const papar = () => {
+      $("auraSizeVal").textContent = Math.round(CFG.size * 100) + "%";
+      $("auraBrightVal").textContent = Math.round(CFG.bright * 100) + "%";
+      $("auraSensVal").textContent = ["", "Rendah", "Sederhana", "Tinggi"][CFG.sens];
+      co.style.opacity = CFG.mode === "custom" ? 1 : .35;
+    };
+    sz.value = CFG.size * 100; br.value = CFG.bright * 100; md.value = CFG.mode; co.value = CFG.color; se.value = CFG.sens; papar();
+    sz.oninput = () => { CFG.size = sz.value / 100; papar(); simpanLook(); };
+    br.oninput = () => { CFG.bright = br.value / 100; papar(); simpanLook(); };
+    md.onchange = () => { CFG.mode = md.value; papar(); simpanLook(); };
+    co.oninput = () => { CFG.color = co.value; CFG.mode = "custom"; md.value = "custom"; papar(); simpanLook(); };
+    se.oninput = () => { CFG.sens = +se.value; papar(); simpanLook(); };
+  })();
+  // ===== Aksi gembira (disentuh / dengar bunyi) =====
+  const AKSI = ["pusing", "lompat", "letup", "goyang", "pelangi", "jantung", "tari"];
+  let aksi = null, aksiAt = -9999, gembiraHingga = 0, bunyiPurata = 0, bunyiAt = 0;
+  function buatAksi(jenis){
+    aksi = jenis || AKSI[(Math.random() * AKSI.length) | 0]; aksiAt = performance.now();
+    gembiraHingga = aksiAt + 2600;
+    if (navigator.vibrate) try { navigator.vibrate(25); } catch (e) {}
+  }
+  A.buatAksi = buatAksi;
   let W, H, mobile = innerWidth < 700;
   const DPR_MAX = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
   let DPR = DPR_MAX;
@@ -1560,7 +1617,13 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
   // --- Sentuhan / tetikus: zarah mengelak jari anda ---
   const ptr = { x: -9999, y: -9999, on: false, t: 0 };
   addEventListener("pointermove", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.t = performance.now(); });
-  addEventListener("pointerdown", e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.t = performance.now(); A.pokeAt = performance.now(); });
+  let auraCX = -9999, auraCY = -9999, auraR = 0;
+  addEventListener("pointerdown", e => {
+    ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.t = performance.now(); A.pokeAt = performance.now();
+    const t = e.target;
+    if (t && t.closest && t.closest("button,input,select,textarea,a,.bottom-dock,.settings-drawer,.modal-backdrop,.settings-fab")) return;
+    if (Math.hypot(e.clientX - auraCX, e.clientY - auraCY) < auraR * 1.5) buatAksi();
+  });
   addEventListener("pointerleave", () => { ptr.on = false; });
 
   // --- MOD LIVE: seret / cubit untuk gerakkan Aura di dalam kamera ---
@@ -1626,13 +1689,19 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     const listening = !!A.listening, speaking = !!A.speaking, thinking = !!A.thinking;
 
     // Tahap suara pengguna
-    if (analyser && listening) {
+    if (analyser) {
       analyser.getByteTimeDomainData(buf); let s = 0;
       for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; s += v * v; }
       micLvl = lerp(micLvl, Math.min(1, Math.sqrt(s / buf.length) * 7), 0.35);
     } else if (listening && A.heardAt && now - A.heardAt < 400) {
       micLvl = lerp(micLvl, 0.6 + 0.3 * Math.random(), 0.3);
     } else micLvl *= 0.9;
+    // Peka bunyi sekeliling: bunyi tiba-tiba (tepuk, panggil) -> bertindak balas
+    const ambang = [0, 0.55, 0.38, 0.24][CFG.sens || 3];
+    if (micLvl > bunyiPurata + ambang && now - bunyiAt > 1500 && !speaking) {
+      bunyiAt = now; buatAksi(micLvl > 0.75 ? "lompat" : (Math.random() < .5 ? "goyang" : "pusing"));
+    }
+    bunyiPurata = lerp(bunyiPurata, micLvl, 0.02);
 
     // Setiap perkataan AI = denyutan
     if (A.wordKick) { wordE = 1; A.wordKick = 0; }
@@ -1646,10 +1715,18 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     wS = lerp(wS, speaking ? 1 : 0, 0.08 * dt);
 
     // Warna ikut emosi (peralihan lembut)
-    const pal = PAL[A.emotion] || PAL.neutral;
+    const gembira = now < gembiraHingga;
+    let pal = PAL[gembira && CFG.mode === "auto" ? "happy" : A.emotion] || PAL.neutral;
+    if (CFG.mode === "custom") pal = hexKeHsl(CFG.color);
+    else if (CFG.mode === "rainbow") pal = [(time * 25) % 360, 95];
     let dh = ((pal[0] - hue + 540) % 360) - 180; hue = (hue + dh * 0.02 * dt + 360) % 360;
     sat = lerp(sat, pal[1], 0.02 * dt);
-    const hueNow = hue + wT * 20 * Math.sin(time * 0.8);
+    // Aksi semasa
+    const tA = (now - aksiAt) / 1000, dA = 1.6, kA = tA < dA ? 1 - tA / dA : 0;
+    const fA = tA < dA ? Math.sin(Math.min(1, tA / dA) * Math.PI) : 0;
+    let hueNow = hue + wT * 20 * Math.sin(time * 0.8);
+    if (CFG.mode === "rainbow") hueNow = (time * 25) % 360;
+    if (kA && aksi === "pelangi") hueNow += tA * 360;
 
     // Pandangan: ikut wajah anda, jari anda, atau merayau sendiri
     let tgx, tgy;
@@ -1721,7 +1798,14 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
       velX = lerp(velX, 0, 0.2); velY = lerp(velY, 0, 0.2);
       curX = cx; curY = cy;
     }
-    const R = baseR * (1 + breath + energy * 0.16 - absorb * 0.14 + poke * 0.08 + jiggle + grab);
+    baseR *= CFG.size;
+    if (kA) {
+      if (aksi === "lompat") cy -= Math.abs(Math.sin(tA / dA * Math.PI * 2)) * baseR * 0.7 * kA;
+      if (aksi === "goyang") cx += Math.sin(tA * 28) * baseR * 0.18 * kA;
+      if (aksi === "tari") { cx += Math.sin(tA * 8) * baseR * 0.35 * kA; cy -= Math.abs(Math.cos(tA * 8)) * baseR * 0.25 * kA; }
+    }
+    auraCX = cx; auraCY = cy; auraR = baseR;
+    const R = baseR * (1 + breath + (kA && aksi === "jantung" ? Math.max(0, Math.sin(tA * 14)) * 0.18 * kA : 0) + (kA && aksi === "letup" ? fA * 0.45 : 0) + energy * 0.16 - absorb * 0.14 + poke * 0.08 + jiggle + grab);
     if (label) {
       if (!(bingkai++ % 30) || !lebarLabel) lebarLabel = label.offsetWidth / 2 + 10;
       const ly = Math.round(Math.min(cy + baseR * 1.25 + 18, H - 40));
@@ -1753,7 +1837,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
 
     // Cahaya teras + "mata" yang memandang anda
     const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.5);
-    gr.addColorStop(0, `hsla(${hueNow},${sat}%,55%,${0.16 + energy * 0.25})`);
+    gr.addColorStop(0, `hsla(${hueNow},${sat}%,55%,${Math.min(0.9, (0.16 + energy * 0.25 + (gembira ? 0.12 : 0)) * CFG.bright * (live ? 1.6 : 1))})`);
     gr.addColorStop(1, `hsla(${hueNow},${sat}%,40%,0)`);
     ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, R * 1.5, 0, 6.29); ctx.fill();
 
@@ -1764,14 +1848,15 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     ctx.fillStyle = eye; ctx.beginPath(); ctx.arc(ex, ey, R * 0.55, 0, 6.29); ctx.fill();
 
     // Putaran: lebih laju bila berfikir; condong ke arah anda
-    rot += (0.0022 + energy * 0.012) * dt;
+    rot += (0.0022 + energy * 0.012 + (kA && (aksi === "pusing" || aksi === "tari") ? 0.22 * kA : 0)) * dt;
     swirl += 0.045 * wT * dt;
     const lean = clamp(velX * 0.03, -0.7, 0.7), leanY = clamp(velY * 0.03, -0.6, 0.6);
     const yaw = rot + gx * 0.55 + lean;
     const tilt = 0.3 + gy * 0.45 + nod + leanY + blink * 0.12;
     const cr = Math.cos(yaw), sr = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
 
-    ctx.globalCompositeOperation = "lighter";
+    ctx.globalCompositeOperation = live ? "source-over" : "lighter";
+    if (live) { ctx.shadowColor = `hsla(${hueNow | 0},100%,55%,.9)`; ctx.shadowBlur = 6 * CFG.bright; }
     const repelR = mobile ? 90 : 130;
     for (const b of kumpulan) b.length = 0;
     const fasa = bingkai & 1;
@@ -1812,7 +1897,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
       px += p.ox; py += p.oy;
 
       const depth = (z2 + 1) / 2, alpha = (0.12 + depth * 0.88) * p.d;
-      const size = (0.6 + depth * 1.8) * (1 + energy * 0.55);
+      const size = (0.6 + depth * 1.8) * (1 + energy * 0.55) * (0.75 + CFG.size * 0.35) * (live ? 1.25 : 1);
       const tw = 0.6 + 0.4 * Math.sin(time * 3 + p.f);
       const ai = Math.min(AL - 1, (alpha * tw * AL) | 0);
       const ki = depth > 0.82 ? HS * LV : Math.min(HS - 1, (p.s * HS) | 0) * LV + Math.min(LV - 1, (depth / 0.82 * LV) | 0);
@@ -1823,16 +1908,17 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbya23QK2Dd1WuZWqpEZ_sTX
     for (let ki = 0; ki <= HS * LV; ki++) {
       const terang = ki === HS * LV;
       const h = terang ? hueNow + 10 : hueNow + (((ki / LV) | 0) + 0.5) / HS * 28;
-      const l = terang ? 94 : 58 + ((ki % LV) + 0.5) / LV * 0.82 * 26;
-      const sa = terang ? 100 : sat;
+      const l = live ? (terang ? 82 : 45 + ((ki % LV) + 0.5) / LV * 20) : (terang ? 94 : 58 + ((ki % LV) + 0.5) / LV * 0.82 * 26);
+      const sa = terang ? 100 : Math.min(100, sat * (live ? 1.15 : 1));
       for (let ai = 0; ai < AL; ai++) {
         const b = kumpulan[ki * AL + ai];
         if (!b.length) continue;
-        ctx.fillStyle = `hsla(${h | 0},${sa | 0}%,${l | 0}%,${((ai + 0.5) / AL).toFixed(3)})`;
+        ctx.fillStyle = `hsla(${h | 0},${sa | 0}%,${l | 0}%,${Math.min(1, ((ai + 0.5) / AL) * CFG.bright * (live ? 1.5 : 1)).toFixed(3)})`;
         for (let j = 0; j < b.length; j += 4) ctx.fillRect(b[j], b[j + 1], b[j + 2], b[j + 3]);
       }
     }
 
+    ctx.shadowBlur = 0;
     // Gelang orbit
     const ringW = Math.max(wT, wS * 0.6, wL * 0.35);
     if (ringW > 0.02) {
