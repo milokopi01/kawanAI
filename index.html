@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDemwKIxmC2v11vTzR6gcNS0dYX5eS2X-ZhemuaVzVAfMipd/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -275,7 +275,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
   const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
   let userName = localStorage.getItem("aura_user_name") || "";
   let aiName = localStorage.getItem("aura_ai_name") || "Aura";
-  let bolehPotong = localStorage.getItem("aura_barge_in") !== "off";
+  let bolehPotong = true; localStorage.setItem("aura_barge_in","on");
   let faceMemoryList = JSON.parse(localStorage.getItem("aura_face_memory_v1") || "[]");
   let chatHistory = JSON.parse(localStorage.getItem("aura_chat_history_v1") || "[]");
 
@@ -956,12 +956,19 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwVhMVM5YfXjcjsCaVocDem
           kosongkanPenimbal();
           if (baki.split(" ").filter(Boolean).length >= 2) teksMuktamad = baki;
           else { textMessageInput.value = ""; return; }
-        } else if (teksMuktamad.trim() && !gemaSuaraAI(teksMuktamad) && normal(teksMuktamad).split(" ").length >= 3) {
-          hentikanSuaraAI(false); // pengguna menyampuk dengan ayat sebenar
+        } else if (!gemaSuaraAI(semua) && normal(semua).split(" ").filter(x => x.length > 1).length >= 2) {
+          // Pengguna mula bercakap -> AI terus diam & dengar ucapan baharu
+          hentikanSuaraAI(true);
         } else {
           if (teksMuktamad.trim() && gemaSuaraAI(teksMuktamad)) teksMuktamad = "";
           return; // abaikan gema suara AI
         }
+      }
+
+      // 1b) AI sedang berfikir & pengguna bercakap ayat baharu -> batal jawapan lama, dengar yang baharu
+      if (AURA.thinking && !arahanBerhenti(semua) && normal(semua).split(" ").length >= 2) {
+        batalPermintaan();
+        orbStatusLabel.textContent = "👂 Saya dengar ayat baharu anda...";
       }
 
       // 2) AI sedang berfikir & pengguna kata berhenti -> batalkan jawapan
