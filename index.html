@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyfQJSBHg1MoywbPcWp64Ny_k-mmuMHPtBAg11VY2zckk4WBszqrnPm5jvOKmuZTJZh/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxTXZVk5-fD2cr-cX1BhP06OIgDTxydsCH7Xu3yJGXBI7CSW9JVwpSiLf2m-upGNCvL/exec"; // <-- BARIS KE-5: TAMPAL URL WEB APP APPS SCRIPT DI SINI
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1321,6 +1321,29 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbyfQJSBHg1MoywbPcWp64Ny
     }
   });
 
+  /* Pilih suara PEREMPUAN Bahasa Melayu (fallback: Indonesia perempuan) */
+  let suaraCache = null;
+  function pilihSuaraPerempuanMelayu() {
+    if (suaraCache) return suaraCache;
+    const v = window.speechSynthesis.getVoices();
+    if (!v.length) return null;
+    const pr = /female|wanita|perempuan|yasmin|amira|gadis|damayanti|siti|nur|google bahasa/i;
+    const lelaki = /male(?!.)|lelaki|osman|ardi|\bmale\b/i;
+    const ms = v.filter(x => /^ms/i.test(x.lang));
+    const id = v.filter(x => /^id/i.test(x.lang));
+    suaraCache =
+      ms.find(x => pr.test(x.name) && !/\bmale\b/i.test(x.name)) ||
+      ms.find(x => !lelaki.test(x.name)) ||
+      id.find(x => pr.test(x.name)) ||
+      id.find(x => !lelaki.test(x.name)) ||
+      ms[0] || id[0] || null;
+    return suaraCache;
+  }
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.onvoiceschanged = () => { suaraCache = null; pilihSuaraPerempuanMelayu(); };
+    window.speechSynthesis.getVoices();
+  }
+
   function cakapSuaraAI(teks) {
     if (!isVoiceOutputOn || !("speechSynthesis" in window)) return;
 
@@ -1328,12 +1351,10 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbyfQJSBHg1MoywbPcWp64Ny
     const bersih = teks.replace(/[*#_~`]/g, "");
     const utterance = new SpeechSynthesisUtterance(bersih);
 
-    const voices = window.speechSynthesis.getVoices();
-    const bmVoice = voices.find(v => v.lang.includes("ms") || v.lang.includes("id"));
-    if (bmVoice) utterance.voice = bmVoice;
-    utterance.lang = "ms-MY";
-    utterance.rate = 1.03;
-    utterance.pitch = 1.0;
+    const voice = pilihSuaraPerempuanMelayu();
+    if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else { utterance.lang = "ms-MY"; }
+    utterance.rate = 1.0;
+    utterance.pitch = voice && /female|wanita|perempuan|yasmin|amira|gadis|damayanti|zira|siti|nur/i.test(voice.name) ? 1.05 : 1.25;
 
     utterance.onstart = () => {
       isAiSpeaking = true;
